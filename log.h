@@ -4,7 +4,7 @@
 #include "log/log_writer.h"
 #include "log/logger_manager.h"
 
-__SUN__
+__OBELISK__
 
 #define LOG_LEVEL(logger, level) \
 	if(logger->getLevel() <= level) \

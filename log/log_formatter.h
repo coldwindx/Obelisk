@@ -6,7 +6,7 @@
 #include "log_event.h"
 #include "format.h"
 
-__SUN__
+__OBELISK__
 /* 日志格式输出 */
 class LogFormatter {
 public:

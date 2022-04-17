@@ -1,6 +1,6 @@
 #include "logger.h"
 
-__SUN__
+__OBELISK__
 
 void Logger::log(LogLevel::Level level, LogEvent::ptr event){
     event->setLevel(level);

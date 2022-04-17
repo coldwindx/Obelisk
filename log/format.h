@@ -7,7 +7,7 @@
 #include "log_level.h"
 #include "log_event.h"
 
-__SUN__
+__OBELISK__
 /* 日志信息格式器 */
 class Format{
 public:

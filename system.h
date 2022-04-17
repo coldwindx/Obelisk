@@ -5,10 +5,10 @@
 #include <sstream>
 #include <time.h>
 
-#define __SUN__ namespace sun {
+#define __OBELISK__ namespace obelisk {
 #define __END__ }
 
-__SUN__
+__OBELISK__
 
 static uint32_t thread_id(){
     std::stringstream ss;

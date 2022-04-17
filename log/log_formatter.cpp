@@ -2,7 +2,7 @@
 #include "log_formatter.h"
 #include "format_manager.h"
 
-__SUN__
+__OBELISK__
 
 LogFormatter::LogFormatter(const std::string & pattern) : m_pattern(pattern) {
     this->init();

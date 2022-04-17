@@ -4,7 +4,7 @@
 #include "../system.h"
 #include "logger.h"
 
-__SUN__
+__OBELISK__
 class LoggerManager {
 public:
     typedef std::shared_ptr<LoggerManager> ptr;

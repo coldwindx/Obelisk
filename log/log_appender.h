@@ -8,7 +8,7 @@
 #include "log_event.h"
 #include "log_formatter.h"
 
-__SUN__
+__OBELISK__
 /* 日志输出 */
 class LogAppender{
 public:

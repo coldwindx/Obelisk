@@ -6,7 +6,7 @@
 #include "log_event.h"
 #include "logger.h"
 
-__SUN__
+__OBELISK__
 
 class LogWriter{
 public:

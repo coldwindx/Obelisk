@@ -3,7 +3,7 @@
 #include <string>
 #include "../system.h"
 
-__SUN__
+__OBELISK__
 // 日志级别枚举类
 class LogLevel{
 public:

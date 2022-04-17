@@ -5,7 +5,7 @@
 #include "../system.h"
 #include "log_level.h"
 
-__SUN__
+__OBELISK__
 
 /* 日志事件类 */
 class LogEvent{

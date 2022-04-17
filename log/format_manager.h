@@ -5,7 +5,7 @@
 #include "../system.h"
 #include "format.h"
 
-__SUN__
+__OBELISK__
 /* 格式转换管理器 */
 class FormatManager{
 public:

@@ -6,7 +6,7 @@
 #include "log_level.h"
 #include "log_appender.h"
 
-__SUN__
+__OBELISK__
 
 class Logger : public std::enable_shared_from_this<Logger>{
 public:
