@@ -4,14 +4,15 @@
 #include "config/config.h"
 #include "log/log_config.h"
 #include "thread/thread.h"
-#include "thread/scoped_lock.h"
+#include "thread/mutex.h"
 
 using namespace std;
 using namespace obelisk;
 
 int cnt = 0;
-//RWMutex s_mutex;
-Mutex s_mutex;
+
+//Mutex s_mutex;
+RWMutex s_mutex;
 
 Logger::ptr g_logger = LOG_NAME("system");
 
@@ -22,8 +23,8 @@ void func1(){
 		<< ", this.id=" << Thread::GetThis()->getId();
 
 	for(int i = 0; i < 1000000; ++i){
-		//RWMutex::WriteLock lock(s_mutex);
-		Mutex::Lock lock(s_mutex);
+		WriteScopedLock<RWMutex> lock(s_mutex);
+		//ScopedLock<Mutex> lock(s_mutex);
 		cnt ++;
 	}
 }
