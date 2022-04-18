@@ -75,7 +75,7 @@ std::string ConfigVar<T, From, To>::toString() {
 		return To()(m_val);
 	}
 	catch (std::exception& e) {
-		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception" << e.what() << " convert: " << typeid(m_val).name() << " to string";
+		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception " << e.what() << " convert: " << typeid(m_val).name() << " to string";
 	}
 	return "";
 }
@@ -91,7 +91,7 @@ bool ConfigVar<T, From, To>::fromString(const std::string & val) {
 		return true;
 	}
 	catch (std::exception & e) {
-		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception" << e.what() << " convert: string to" << typeid(m_val).name();
+		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception " << e.what() << " convert: string to" << typeid(m_val).name();
 	}
 	return false;
 }

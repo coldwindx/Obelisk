@@ -27,7 +27,7 @@ public:
     std::string operator()(const std::vector<T> & vc){
         YAML::Node node;
         for(auto & v : vc)
-            node.push_back(v);
+            node.push_back(YAML::Load(Convert<T, std::string>()(v)));
         std::stringstream ss;
         ss << node;
         return ss.str();
@@ -86,7 +86,7 @@ public:
     std::string operator()(const std::set<T> & st){
         YAML::Node node;
         for(auto & v : st)
-            node.push_back(v);
+            node.push_back(YAML::Load(Convert<T, std::string>()(v)));
         std::stringstream ss;
         ss << node;
         return ss.str();

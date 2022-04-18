@@ -2,17 +2,31 @@
 #include <string>
 #include "log/log.h"
 #include "config/config.h"
+#include "log/log_config.h"
 
 using namespace std;
 using namespace obelisk;
 
-ConfigVar<list<int> >::ptr g_value_config = Config::lookup("logs", list<int>{1,2,4,2}, "system vector");
+void test_config() {
+	//cout << LogManager::instance()->toYamlString() << endl;
+	YAML::Node root = YAML::LoadFile("/home/workspace/bin/con/logs.yaml");
+	cout << "====================================" << endl;
+	Config::loadFromYaml(root);
+	//cout << LogManager::instance()->toYamlString() << endl;
+	LOG_INFO(LOG_NAME("system")) << "hello, system!";
+}
 
-
-int main(){
-    cout << "old_value:" << g_value_config->toString() << endl;
+void test(){
+    //cout << Convert<std::set<LogConfig>, string>()(set<LogConfig>()) << endl;
+    //ConfigVar<std::set<LogConfig> >::ptr g_log_defines = Config::lookup("logs", std::set<LogConfig>(), "logs config");
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
-    cout << "new_value" << g_value_config->toString() << endl;
-    return 0;
+    LoggerManager::ptr manager = LoggerManager::instance();
+    LOG_INFO(LOG_NAME("root")) << "hello, system!";
+}
+int main()
+{
+	//test_config();
+    test();
+	return 0;
 }
