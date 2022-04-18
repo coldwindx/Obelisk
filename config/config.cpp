@@ -1,6 +1,6 @@
 #include "../system.h"
-#include "../config.h"
-#include "../log.h"
+#include "../log/log.h"
+#include "config.h"
 
 __OBELISK__
 

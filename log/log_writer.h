@@ -16,7 +16,7 @@ public:
 	}
 
 	std::stringstream& stream() { return m_event->stream(); }
-	std::stringstream& format(const char * fmt, ...) {
+	void format(const char * fmt, ...) {
 		va_list al;
 		va_start(al, fmt);
 		char buf[1024];

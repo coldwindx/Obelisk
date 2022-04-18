@@ -1,8 +1,8 @@
 #pragma once
 
-#include "system.h"
-#include "log/log_writer.h"
-#include "log/logger_manager.h"
+#include "../system.h"
+#include "log_writer.h"
+#include "logger_manager.h"
 
 __OBELISK__
 

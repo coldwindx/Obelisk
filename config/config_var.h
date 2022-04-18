@@ -4,7 +4,7 @@
 #include <functional>
 #include <map>
 #include "../system.h"
-#include "../log.h"
+#include "../log/log.h"
 #include "convert.h"
 
 
@@ -18,8 +18,8 @@ public:
         : m_name(name), m_description(description) {}
     virtual ~ConfigVarBase() {}
 
-    std::string getName() const { return m_name; }
-    std::string getDescription() const { return m_description; }
+    std::string name() const { return m_name; }
+    std::string description() const { return m_description; }
 
     virtual std::string valueType() const = 0;
     virtual std::string toString() = 0;
@@ -37,7 +37,7 @@ public:
     typedef std::shared_ptr<ConfigVar> ptr;
     typedef std::function<void(const T & oldV, const T & newV)> listener;
 
-    ConfigVar(const std::string & name, const T & value, cosnt std::string & m_description = "")
+    ConfigVar(const std::string & name, const T & value, const std::string& description = "")
         : ConfigVarBase(name, description), m_val(value) {}
     
     T value() const { return m_val; }
@@ -72,10 +72,10 @@ private:
 template<typename T, typename From, typename To>
 std::string ConfigVar<T, From, To>::toString() {
 	try {
-		return To()(_val);
+		return To()(m_val);
 	}
 	catch (std::exception& e) {
-		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception" << e.what() << " convert: " << typeid(_val).name() << " to string";
+		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception" << e.what() << " convert: " << typeid(m_val).name() << " to string";
 	}
 	return "";
 }
@@ -84,14 +84,14 @@ template<typename T, typename From, typename To>
 bool ConfigVar<T, From, To>::fromString(const std::string & val) {
 	try {
 		T v = From()(val);
-		if (v == _val) return true;
-		for (auto & i : _onChanges)
-			i.second(_val, v);		// 触发监听
-		_val = v;
+		if (v == m_val) return true;
+		for (auto & i : m_listeners)
+			i.second(m_val, v);		// 触发监听
+		m_val = v;
 		return true;
 	}
-	catch (exception & e) {
-		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception" << e.what() << " convert: string to" << typeid(_val).name();
+	catch (std::exception & e) {
+		LOG_ERROR(LOG_SYSTEM()) << "ConfigVar::toString() exception" << e.what() << " convert: string to" << typeid(m_val).name();
 	}
 	return false;
 }
