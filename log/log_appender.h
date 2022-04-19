@@ -20,11 +20,11 @@ public:
     LogLevel::Level getLevel() const { return m_level; }
     void setLevel(LogLevel::Level level) { m_level = level; }
     LogFormatter::ptr getFormatter() { 
-        ScopedLock<Mutex> lock(m_mutex);
+        SpinLock lock();
         return m_formatter; 
     }
     void setFormatter(LogFormatter::ptr formatter) { 
-        ScopedLock<Mutex> lock(m_mutex);
+        SpinLock lock();
         m_formatter = formatter; 
     }
 
@@ -32,7 +32,7 @@ public:
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;      // 日志等级
     LogFormatter::ptr m_formatter = nullptr;
-    Mutex m_mutex;                                  // 写多读少
+   // Mutex m_mutex;                                  // 写多读少
 };
 
 /* 输出到标准输出流 */
@@ -44,7 +44,7 @@ public:
         if(event->getLevel() < m_level)
             return;
             
-        ScopedLock<Mutex> lock(m_mutex);
+        SpinLock lock();
 
         std::cout << m_formatter->format(event);
     }
@@ -65,14 +65,19 @@ public:
             return;
         if (event->getLevel() < this->m_level) return;
 
-        ScopedLock<Mutex> lock(m_mutex);
-
-		if (m_filestream) m_filestream.close();
-		m_filestream.open(m_filename, std::ios::app);
-		m_filestream << m_formatter->format(event) << std::endl;
+        SpinLock lock();
+        // 实现对于外部用户操作文件的感知
+        uint64_t now = time(0);
+        if(now != m_lastTime){
+            if (m_filestream) m_filestream.close();
+            m_filestream.open(m_filename, std::ios::app);
+            m_lastTime = now;
+        }
+		m_filestream << m_formatter->format(event);
     }
 private:
     std::string m_filename;
     std::ofstream m_filestream;
+    uint64_t m_lastTime = 0;
 };
 __END__

@@ -11,12 +11,12 @@ public:
     typedef std::shared_ptr<LoggerManager> ptr;
 
     void set(const std::string& name, Logger::ptr logger){
-        ScopedLock<Mutex> lock(m_mutex);
+        SpinLock lock();
         
         m_loggers[name] = logger;
     }
     Logger::ptr get(const std::string& name = "system") {
-        ScopedLock<Mutex> lock(m_mutex);
+        SpinLock lock();
 
         auto it = m_loggers.find(name);
         if(m_loggers.end() != it)
@@ -25,7 +25,7 @@ public:
         return m_loggers[name] = logger;
     }
     void del(const std::string & name){
-        ScopedLock<Mutex> lock(m_mutex);
+        SpinLock lock();
 
         m_loggers.erase(name);
     }
@@ -35,7 +35,7 @@ public:
     }
 private:
     std::map<std::string, Logger::ptr> m_loggers;
-    Mutex m_mutex;
+    //Mutex m_mutex;
 
     LoggerManager(){
         Logger::ptr logger(new Logger());

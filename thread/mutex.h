@@ -1,13 +1,26 @@
 #pragma once
 
-#include "../system.h"
+#include "system.h"
+#include "lock.h"
+#include <atomic>
 
 #define _USE_THREAD_ 1
 
 __OBELISK__
 
+class Mutex;
+class RWMutex;
+class SpinMutex;
+class CASMutex;
+
+typedef ScopedLock<Mutex> Lock;
+typedef ReadScopedLock<RWMutex> ReadLock;
+typedef WriteScopedLock<RWMutex> WriteLock;
+typedef ScopedLock<SpinMutex> SpinLock;
+typedef ScopedLock<CASMutex> CASLock;
+
 #if _USE_THREAD_
-/* 互斥信号量 */
+/* 互斥量 */
 class Mutex{
 public:
     Mutex(){
@@ -48,6 +61,44 @@ private:
     pthread_rwlock_t m_lock;
 };
 
+/* 自旋锁互斥量 */
+class SpinMutex{
+public:
+    SpinMutex(){
+        pthread_spin_init(&m_mutex, 0);
+    }
+    ~SpinMutex(){
+        pthread_spin_destroy(&m_mutex);
+    }
+    void lock(){
+        pthread_spin_lock(&m_mutex);
+    }
+    void unlock(){
+        pthread_spin_unlock(&m_mutex);
+    }
+private:
+    pthread_spinlock_t m_mutex;
+};
+
+/* 原子互斥量 */
+class CASMutex{
+public:
+    CASMutex(){
+        m_mutex.clear();
+    }
+    ~CASMutex(){
+
+    }
+    void lock(){
+        while(std::atomic_flag_test_and_set_explicit(&m_mutex, std::memory_order_acquire)){}
+    }
+    void unlock(){
+        std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_release);
+    }
+private:
+    std::atomic_flag m_mutex;
+};
+
 #else 
 
 class Mutex{
@@ -68,89 +119,5 @@ public:
 };
 
 #endif
-
-/* 互斥锁(RAII) */
-template<typename T>
-struct ScopedLock{
-public:
-    ScopedLock(T & mutex) : m_mutex(mutex){
-        m_mutex.lock();
-        m_locked = true;
-    }
-    ~ScopedLock(){
-        unlock();
-    }
-    void lock(){
-        if(!m_locked){
-            m_mutex.lock();
-            m_locked = true;
-        }
-    }
-    void unlock(){
-        if(m_locked){
-            m_mutex.unlock();
-            m_locked = false;
-        }
-    }
-private:
-    T & m_mutex;
-    bool m_locked;
-};
-
-/* 读锁(RAII) */
-template<typename T>
-struct ReadScopedLock{
-public:
-    ReadScopedLock(T & mutex) : m_mutex(mutex){
-        m_mutex.rdlock();
-        m_locked = true;
-    }
-    ~ReadScopedLock(){
-        unlock();
-    }
-    void lock(){
-        if(!m_locked){
-            m_mutex.rdlock();
-            m_locked = true;
-        }
-    }
-    void unlock(){
-        if(m_locked){
-            m_mutex.unlock();
-            m_locked = false;
-        }
-    }
-private:
-    T & m_mutex;
-    bool m_locked;
-};
-
-/* 写锁(RAII) */
-template<typename T>
-struct WriteScopedLock{
-public:
-    WriteScopedLock(T & mutex) : m_mutex(mutex){
-        m_mutex.wrlock();
-        m_locked = true;
-    }
-    ~WriteScopedLock(){
-        unlock();
-    }
-    void lock(){
-        if(!m_locked){
-            m_mutex.wrlock();
-            m_locked = true;
-        }
-    }
-    void unlock(){
-        if(m_locked){
-            m_mutex.unlock();
-            m_locked = false;
-        }
-    }
-private:
-    T & m_mutex;
-    bool m_locked;
-};
 
 __END__
