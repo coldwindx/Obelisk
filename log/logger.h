@@ -5,6 +5,7 @@
 #include "../system.h"
 #include "log_level.h"
 #include "log_appender.h"
+#include "thread/mutex.h"
 
 __OBELISK__
 
@@ -37,5 +38,6 @@ private:
     const char * m_pattern = "%d [%p] %t %f:%l %m %n";
     LogLevel::Level m_level = LogLevel::DEBUG;
     std::list<LogAppender::ptr> m_appenders;
+	Mutex m_mutex;		// 控制Appender的修改 
 };
 __END__

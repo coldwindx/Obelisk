@@ -2,8 +2,11 @@
 
 #include "../system.h"
 
+#define _USE_THREAD_ 1
+
 __OBELISK__
 
+#if _USE_THREAD_
 /* 互斥信号量 */
 class Mutex{
 public:
@@ -22,7 +25,6 @@ public:
 private:
     pthread_mutex_t m_mutex;
 };
-
 
 /* 读写互斥量 */
 class RWMutex{
@@ -45,6 +47,27 @@ public:
 private:
     pthread_rwlock_t m_lock;
 };
+
+#else 
+
+class Mutex{
+public:
+    Mutex(){}
+    ~Mutex(){}
+    void lock(){}
+    void unlock(){}
+};
+
+class RWMutex{
+public:
+    RWMutex(){}
+    ~RWMutex(){}
+    void rdlock(){}
+    void wrlock(){}
+    void unlock(){}
+};
+
+#endif
 
 /* 互斥锁(RAII) */
 template<typename T>

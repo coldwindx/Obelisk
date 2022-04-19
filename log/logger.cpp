@@ -7,6 +7,8 @@ void Logger::log(LogLevel::Level level, LogEvent::ptr event){
     event->setLoggerName(m_name);
     if(level < this->m_level)
         return;
+    
+    ScopedLock<Mutex> lock(m_mutex);
     for(auto ap : m_appenders)
         ap->log(event);
 }
@@ -27,9 +29,11 @@ void Logger::fatal(LogEvent::ptr event){
 }
 
 void Logger::addAppender(LogAppender::ptr appender){
+    ScopedLock<Mutex> lock(m_mutex);
     m_appenders.push_back(appender);
 }
 void Logger::delAppender(LogAppender::ptr appender){
+    ScopedLock<Mutex> lock(m_mutex);
     for(auto it = m_appenders.begin(); it != m_appenders.end(); ++it)
         if(*it == appender){
             m_appenders.erase(it);
@@ -38,6 +42,7 @@ void Logger::delAppender(LogAppender::ptr appender){
 }
 
 void Logger::clear(){
+    ScopedLock<Mutex> lock(m_mutex);
     m_name = nullptr;
 	m_level = LogLevel::DEBUG;
 	m_pattern = "%d [%p] %t %f:%l %m %n";

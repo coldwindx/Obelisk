@@ -1,8 +1,13 @@
 PROJECT(OBELISK)
 
+INCLUDE_DIRECTORIES(/usr/include)
+INCLUDE_DIRECTORIES(./)
+
 SET(SRC_LIST    
-    main.cpp log/log_formatter.cpp 
-    log/logger.cpp config/config.cpp
+    main.cpp 
+    log/log_formatter.cpp 
+    log/logger.cpp 
+    config/config.cpp
     thread/thread.cpp)
 SET(LIBS pthread yaml-cpp)
 

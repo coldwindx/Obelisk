@@ -2,7 +2,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "../system.h"
+#include <system.h>
 
 __OBELISK__
 class Semaphore{
