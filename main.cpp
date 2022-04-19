@@ -84,19 +84,23 @@ Logger::ptr g_logger = LOG_SYSTEM();
 void func4(){
 	LOG_INFO(g_logger) << "func4 run in coroutine begin";
 	//Coroutine::GetSelf()->swapOut();
-	Coroutine::YieldToReady();
+	Coroutine::YieldToHold();
 	LOG_INFO(g_logger) << "func4 run in coroutine end";
 	Coroutine::YieldToHold();
 }
 
 void test_coroutine(){
-	Coroutine::GetSelf();
-	LOG_INFO(g_logger) << "coroutine test begin";
-	Coroutine::ptr c(new Coroutine(func4));
-	LOG_INFO(g_logger) << "coroutine create success";
-	c->swapIn();
-	LOG_INFO(g_logger) << "coroutine after swapIn";
-	c->swapIn();
-	LOG_INFO(g_logger) << "coroutine test end";
-	
+	LOG_INFO(g_logger) << "coroutine test in beginning";
+	{
+		Coroutine::GetSelf();		// 初始化主协程
+		LOG_INFO(g_logger) << "coroutine test begin";
+		Coroutine::ptr c(new Coroutine(func4));
+		LOG_INFO(g_logger) << "coroutine create success";
+		c->swapIn();
+		LOG_INFO(g_logger) << "coroutine after swapIn";
+		c->swapIn();
+		LOG_INFO(g_logger) << "coroutine test end";
+		c->swapIn();
+	}
+	LOG_INFO(g_logger) << "coroutine test in ended";
 }

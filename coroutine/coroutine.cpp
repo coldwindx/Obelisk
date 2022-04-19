@@ -135,11 +135,11 @@ void Coroutine::YieldToReady(){
     cur->swapOut();
 }
 
-// 协程切换到后台，并设置 Hold状态
+// 当前协程切换到后台，并设置Ready状态
 void Coroutine::YieldToHold(){
     Coroutine::ptr cur = GetSelf();
     cur->m_state = HOLD;
-    cur->swapIn();
+    cur->swapOut();
 }    
 
 uint64_t Coroutine::Total(){
@@ -160,6 +160,8 @@ void Coroutine::start(){
         cur->m_state = ERROR;
         LOG_ERROR(g_logger) << "coroutine except";
     }
+    // 换回主协程
+    cur->swapOut();
 }
 
 __END__
