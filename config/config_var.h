@@ -1,11 +1,13 @@
 #pragma once
 
+#include <stdint.h>
 #include <memory>
 #include <functional>
 #include <map>
-#include "../system.h"
-#include "../log/log.h"
+#include "system.h"
 #include "convert.h"
+#include "log/log.h"
+#include "thread/mutex.h"
 
 
 __OBELISK__
@@ -40,20 +42,26 @@ public:
     ConfigVar(const std::string & name, const T & value, const std::string& description = "")
         : ConfigVarBase(name, description), m_val(value) {}
     
-    T value() const { return m_val; }
+    T getValue() const { return m_val; }
+    void setValue(const T & val);
     virtual std::string valueType() const override { return typeid(T).name(); }
     virtual std::string toString() override;
     virtual bool fromString(const std::string & str) override;
 
-    void addListener(uint64_t key, listener func){
-        m_listeners[key] = func;
+    uint64_t addListener(listener func){
+        static uint64_t s_func_id = 0;
+        WriteLock lock(m_mutex);
+        m_listeners[++s_func_id] = func;
+        return s_func_id;
     }
 
     void delListener(uint64_t key){
+        WriteLock lock(m_mutex);
         m_listeners.erase(key);
     }
 
     listener getListener(uint64_t key){
+        ReadLock lock(m_mutex);
         auto it = m_listeners.find(key);
         if(it == m_listeners.end())
             return nullptr;
@@ -61,17 +69,32 @@ public:
     }
 
     void clearListener(){
+        WriteLock lock(m_mutex);
         m_listeners.clear();
     }
 private:
     T m_val;
     std::map<uint64_t, listener> m_listeners;
+    RWMutex m_mutex;            // 读写互斥
 };
 
+template<typename T, typename From, typename To>
+void ConfigVar<T, From, To>::setValue(const T & v){
+        {
+            ReadLock lock(m_mutex);
+            if (v == m_val) return;
+            for (auto & i : m_listeners)
+                i.second(m_val, v);		// 触发监听
+        }
+        WriteLock lock(m_mutex);
+        m_val = v;
+}
 
 template<typename T, typename From, typename To>
 std::string ConfigVar<T, From, To>::toString() {
 	try {
+        // T可能是非基本类型，所以加锁
+        ReadLock lock(m_mutex);
 		return To()(m_val);
 	}
 	catch (std::exception& e) {
@@ -84,10 +107,7 @@ template<typename T, typename From, typename To>
 bool ConfigVar<T, From, To>::fromString(const std::string & val) {
 	try {
 		T v = From()(val);
-		if (v == m_val) return true;
-		for (auto & i : m_listeners)
-			i.second(m_val, v);		// 触发监听
-		m_val = v;
+        setValue(v);
 		return true;
 	}
 	catch (std::exception & e) {

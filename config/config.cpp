@@ -1,6 +1,6 @@
-#include "../system.h"
-#include "../log/log.h"
+#include "system.h"
 #include "config.h"
+#include "log/log.h"
 
 __OBELISK__
 
@@ -10,6 +10,8 @@ void Config::loadFromYaml(const YAML::Node & root){
     for(auto & i : nodes){
         std::string key = i.first;
         if(key.empty()) continue;
+
+        ReadLock lock(GetMutex());
         auto it = configVarMap().find(key);
         if(configVarMap().end() == it)
             continue;
@@ -23,7 +25,13 @@ void Config::loadFromYaml(const YAML::Node & root){
     }
 }
 
-    
+void Config::visit(std::function<void(ConfigVarBase::ptr)> callback){
+    ReadLock lock(GetMutex());
+    for(auto it = configVarMap().begin();
+                it != configVarMap().end(); ++it)
+        callback(it->second);
+}
+
 void Config::transform(const std::string & prefix, const YAML::Node & node
         , std::list<std::pair<std::string, YAML::Node>>& output){
 	if (prefix.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ._0123456789") != std::string::npos) {
@@ -43,5 +51,9 @@ std::map<std::string, ConfigVarBase::ptr>& Config::configVarMap(){
 	return _configVarMap;
 }
 
+RWMutex& Config::GetMutex(){
+    static RWMutex s_mutex;
+    return s_mutex;
+}
 
 __END__

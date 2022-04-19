@@ -44,6 +44,10 @@ void func3(){
 
 int main()
 {
+	LOG_INFO(g_logger) << "config test begin";
+	YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
+	Config::loadFromYaml(root);
+	LOG_INFO(g_logger) << "config test end";
 	LOG_INFO(g_logger) << "thread test begin";
     vector<Thread::ptr> thrs;
 	for(int i = 0; i < 2; ++i){
