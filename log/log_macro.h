@@ -1,10 +1,11 @@
 #pragma once
 
+#include "thread/thread.h"
 #include "coroutine/coroutine.h"
 
 #define LOG_LEVEL(logger, level) \
 	if(logger->getLevel() <= level) \
-        obelisk::LogWriter(logger, obelisk::LogEvent::ptr(new obelisk::LogEvent(__FILE__, __LINE__, level, 0, thread_id(), Coroutine::GetCoroutineId(), time(0)))).stream()
+        obelisk::LogWriter(logger, obelisk::LogEvent::ptr(new obelisk::LogEvent(__FILE__, __LINE__, level, 0, thread_id(), Thread::GetName(), Coroutine::GetCoroutineId(), time(0)))).stream()
 #define LOG_DEBUG(logger) LOG_LEVEL(logger, obelisk::LogLevel::DEBUG)
 #define LOG_INFO(logger) LOG_LEVEL(logger, obelisk::LogLevel::INFO)
 #define LOG_WARN(logger) LOG_LEVEL(logger, obelisk::LogLevel::WARN)
@@ -13,7 +14,7 @@
 
 #define LOG_FMT_LEVEL(logger, level, fmt, ...) \
 	if(logger->getLevel() <= level) \
-		obelisk::LogWriter(logger, obelisk::LogEvent::ptr(new obelisk::LogEvent(__FILE__, __LINE__, level, 0, :thread_id(), Coroutine::GetCoroutineId(), time(0)))).format(fmt, __VA_ARGS__)
+		obelisk::LogWriter(logger, obelisk::LogEvent::ptr(new obelisk::LogEvent(__FILE__, __LINE__, level, 0, :thread_id(), Thread::GetName(), Coroutine::GetCoroutineId(), time(0)))).format(fmt, __VA_ARGS__)
 #define LOG_FMT_DEBUG(logger, fmt, ...) LOG_FMT_LEVEL(logger, obelisk::LogLevel::DEBUG, fmt, __VA_ARGS__)
 #define LOG_FMT_INFO(logger, fmt, ...) LOG_FMT_LEVEL(logger, obelisk::LogLevel::INFO, fmt, __VA_ARGS__)
 #define LOG_FMT_WARN(logger, fmt, ...) LOG_FMT_LEVEL(logger, obelisk::LogLevel::WARN, fmt, __VA_ARGS__)

@@ -17,6 +17,7 @@ public:
 		, LogLevel::Level level
 		, uint32_t elapse
 		, uint32_t threadId
+        , const std::string & threadName
 		, uint32_t coroutineId
 		, uint64_t time) {
 		this->m_filename = filename;
@@ -24,6 +25,7 @@ public:
 		this->m_level = level;
 		this->m_elapse = elapse;
 		this->m_threadId = threadId;
+        this->m_threadName = threadName;
 		this->m_coroutineId = coroutineId;
 		this->m_time = time;
 	}
@@ -31,6 +33,7 @@ public:
     const char * getFilename() const { return m_filename; }
     uint32_t getLine() const { return m_line; }
     uint32_t getThreadId() const { return m_threadId; }
+    std::string& getThreadName() { return m_threadName; }
     uint32_t getCoroutineId() const { return m_coroutineId; }
     uint32_t getTime() const { return m_time; }
     uint32_t getElapse() const { return m_elapse; }
@@ -43,6 +46,7 @@ private:
     const char * m_filename = nullptr;  // 文件名
     uint32_t m_line = 0;                // 行号
     uint32_t m_threadId = 0;            // 线程ID
+    std::string m_threadName = "";      
     uint32_t m_coroutineId = 0;         // 协程ID
     uint32_t m_time = 0;                // 时间戳
     uint32_t m_elapse = 0;              // 运行时间

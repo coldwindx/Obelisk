@@ -37,7 +37,8 @@ private:
 		m_fmtBuildMap["r"] = [](const std::string & fmt) { return Format::ptr(new ElapseFormat(fmt)); };
 		m_fmtBuildMap["c"] = [](const std::string & fmt) { return Format::ptr(new LoggerNameFormat(fmt)); };
 		m_fmtBuildMap["t"] = [](const std::string & fmt) { return Format::ptr(new ThreadIdFormat(fmt)); };
-		m_fmtBuildMap["n"] = [](const std::string & fmt) { return Format::ptr(new EnterFormat(fmt)); };
+		m_fmtBuildMap["TN"] = [](const std::string & fmt) { return Format::ptr(new ThreadNameFormat(fmt)); };
+        m_fmtBuildMap["n"] = [](const std::string & fmt) { return Format::ptr(new EnterFormat(fmt)); };
 		m_fmtBuildMap["d"] = [](const std::string & fmt) { return Format::ptr(new DateTimeFormat(fmt)); };
 		m_fmtBuildMap["f"] = [](const std::string & fmt) { return Format::ptr(new FilenameFormat(fmt)); };
 		m_fmtBuildMap["l"] = [](const std::string & fmt) { return Format::ptr(new LineFormat(fmt)); };

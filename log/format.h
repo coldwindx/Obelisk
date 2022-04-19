@@ -104,6 +104,15 @@ public:
 	}
 };
 
+class ThreadNameFormat : public Format {
+public:
+	ThreadNameFormat(const std::string & fmt = "") {}
+	// 通过 Format 继承
+	virtual void format(std::ostream & os, LogEvent::ptr event) override {
+		os << event->getThreadName();
+	}
+};
+
 /*--------------------------------协程信息格式化--------------------------------------*/
 class CoroutineIdFormat : public Format {
 public:

@@ -90,6 +90,7 @@ void func4(){
 }
 
 void test_coroutine(){
+	Thread::SetName("main");
 	LOG_INFO(g_logger) << "coroutine test in beginning";
 	{
 		Coroutine::GetSelf();		// 初始化主协程

@@ -37,7 +37,7 @@ Coroutine::Coroutine(){
         OBELISK_ASSERT2(false, "getcontext");
     ++s_coroutine_total;
 
-    LOG_DEBUG(g_logger) << "Coroutine::Coroutine";
+  //  LOG_DEBUG(g_logger) << "Coroutine::Coroutine";
 }
 
 Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
@@ -55,7 +55,7 @@ Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
         m_ctx.uc_stack.ss_size = m_stacksize;
 
         makecontext(&m_ctx, &Coroutine::start, 0);
-        LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
+     //   LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
 }
 
 Coroutine::~Coroutine(){
@@ -63,7 +63,7 @@ Coroutine::~Coroutine(){
     if(m_stack){
         OBELISK_ASSERT(m_state == TERM || m_state == INIT || m_state == ERROR);
         MemoryAllocator::Free(m_stack, m_stacksize);
-        LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id" << m_id;
+       // LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id=" << m_id;
         return;
     }
     // 没有栈空间，说明当前为主协程
@@ -72,7 +72,7 @@ Coroutine::~Coroutine(){
 
     Coroutine* cor = t_coroutine;
     if(cor == this) SetThis(nullptr);
-    LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id" << m_id;
+    //LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id=" << m_id;
 }
 // 重置协程函数，并重置状态
 void Coroutine::reset(std::function<void()> callback){
@@ -161,7 +161,9 @@ void Coroutine::start(){
         LOG_ERROR(g_logger) << "coroutine except";
     }
     // 换回主协程
-    cur->swapOut();
+    auto p = cur.get();
+    cur.reset();            // 引用计数减一，防止引用计数器只增不减，
+    p->swapOut();           // 无法触发析构函数
 }
 
 __END__
