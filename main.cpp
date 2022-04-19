@@ -47,18 +47,24 @@ int main()
 	LOG_INFO(g_logger) << "config test begin";
 	YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
 	Config::loadFromYaml(root);
+	Config::visit([](ConfigVarBase::ptr var){
+		LOG_INFO(g_logger) << "name=" << var->name()
+				<< " description=" << var->description()
+				<< " typename=" << var->valueType()
+				<< " value=" << var->toString();
+	});
 	LOG_INFO(g_logger) << "config test end";
 	LOG_INFO(g_logger) << "thread test begin";
     vector<Thread::ptr> thrs;
-	for(int i = 0; i < 2; ++i){
-		Thread::ptr thr1(new Thread(&func2, "name_" + to_string(i * 2)));
-		Thread::ptr thr2(new Thread(&func3, "name_" + to_string(i * 2 + 1)));
-		thrs.push_back(thr1);
-		thrs.push_back(thr2);
-	}
-	for(int i = 0; i < thrs.size(); ++i){
-		thrs[i]->join();
-	}
+	// for(int i = 0; i < 2; ++i){
+	// 	Thread::ptr thr1(new Thread(&func2, "name_" + to_string(i * 2)));
+	// 	Thread::ptr thr2(new Thread(&func3, "name_" + to_string(i * 2 + 1)));
+	// 	thrs.push_back(thr1);
+	// 	thrs.push_back(thr2);
+	// }
+	// for(int i = 0; i < thrs.size(); ++i){
+	// 	thrs[i]->join();
+	// }
 	LOG_INFO(g_logger) << "thread test end";
 	return 0;
 }
