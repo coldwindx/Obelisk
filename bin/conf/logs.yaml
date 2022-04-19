@@ -7,6 +7,7 @@ logs:
           - type: StdoutLogAppender
     - name: system
       level: debug
+      format: "%d [%p] %t|%F %f:%l %m %n"
       appenders:
           - type: FileLogAppender
             file: ./system.log

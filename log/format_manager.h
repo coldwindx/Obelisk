@@ -42,7 +42,7 @@ private:
 		m_fmtBuildMap["f"] = [](const std::string & fmt) { return Format::ptr(new FilenameFormat(fmt)); };
 		m_fmtBuildMap["l"] = [](const std::string & fmt) { return Format::ptr(new LineFormat(fmt)); };
 		m_fmtBuildMap["T"] = [](const std::string & fmt) { return Format::ptr(new TabFormat(fmt)); };
-		m_fmtBuildMap["F"] = [](const std::string & fmt) { return Format::ptr(new FiberIdFormat(fmt)); };
+		m_fmtBuildMap["F"] = [](const std::string & fmt) { return Format::ptr(new CoroutineIdFormat(fmt)); };
     }
 };
 

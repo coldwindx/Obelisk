@@ -9,7 +9,8 @@ SET(SRC_LIST
     log/logger.cpp 
     log/log_initer.cpp
     config/config.cpp
-    thread/thread.cpp)
+    thread/thread.cpp
+    coroutine/coroutine.cpp)
 SET(LIBS pthread yaml-cpp)
 
 LINK_DIRECTORIES(/usr/local/lib64)

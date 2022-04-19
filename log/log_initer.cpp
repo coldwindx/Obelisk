@@ -1,4 +1,5 @@
 #include "log_initer.h"
+#include "log_macro.h"
 #include "config/config.h"
 
 __OBELISK__
@@ -126,9 +127,7 @@ LogIniter::LogIniter(){
                 if(!format->isError()){
                     ap->setFormatter(format);
                 }else{
-                    LogWriter writer(manager->get("system")
-                            , LogEvent::ptr(new LogEvent(__FILE__, __LINE__, LogLevel::ERROR, 0, thread_id(), fiber_id(), time(0))));
-                	writer.stream() << "logger name=" << i.name
+                    LOG_ERROR(LOG_SYSTEM()) << "logger name=" << i.name
 							<< " appender type=" << a.type
 							<< " format=" << a.format
 							<< " is invaild" << std::endl;   

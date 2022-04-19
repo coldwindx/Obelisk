@@ -1,0 +1,165 @@
+#include "system.h"
+#include <atomic>
+#include "config/config.h"
+#include "log.h"
+#include "coroutine_macro.h"
+#include "coroutine.h"
+
+__OBELISK__
+
+static Logger::ptr g_logger = LOG_SYSTEM();
+
+static std::atomic<uint64_t> s_coroutine_id(0);
+static std::atomic<uint64_t> s_coroutine_total(0);
+                                    // 当前正在执行的协程
+static thread_local Coroutine* t_coroutine = nullptr;   
+                                    // 当前线程的主协程
+static thread_local Coroutine::ptr t_thread_coroutine = nullptr;
+                                    // 协程栈空间
+static ConfigVar<uint32_t>::ptr g_coroutine_stack_size = 
+        Config::lookup<uint32_t>("coroutine.stack_size", 1024 * 1024, "coroutine stack size");
+
+class MemoryAllocator{
+public:
+    static void* Malloc(size_t size){
+        return malloc(size);
+    }
+    static void Free(void* vp, size_t size){
+        return free(vp);
+    }
+};
+
+Coroutine::Coroutine(){
+    m_state = EXEC;
+    SetThis(this);
+    // 获取当前线程的上下文
+    if(getcontext(&m_ctx))
+        OBELISK_ASSERT2(false, "getcontext");
+    ++s_coroutine_total;
+
+    LOG_DEBUG(g_logger) << "Coroutine::Coroutine";
+}
+
+Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
+    : m_id(++s_coroutine_id), m_callback(callback) {
+        ++s_coroutine_total;
+        if(0 == (m_stacksize = stacksize)) 
+            m_stacksize = g_coroutine_stack_size->getValue();
+        
+        m_stack = MemoryAllocator::Malloc(m_stacksize);
+        if(getcontext(&m_ctx))
+            OBELISK_ASSERT2(false, "getcontext");
+        
+        m_ctx.uc_link = nullptr;
+        m_ctx.uc_stack.ss_sp = m_stack;
+        m_ctx.uc_stack.ss_size = m_stacksize;
+
+        makecontext(&m_ctx, &Coroutine::start, 0);
+        LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
+}
+
+Coroutine::~Coroutine(){
+    --s_coroutine_total;
+    if(m_stack){
+        OBELISK_ASSERT(m_state == TERM || m_state == INIT || m_state == ERROR);
+        MemoryAllocator::Free(m_stack, m_stacksize);
+        LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id" << m_id;
+        return;
+    }
+    // 没有栈空间，说明当前为主协程
+    OBELISK_ASSERT(!m_callback);
+    OBELISK_ASSERT(m_state == EXEC);
+
+    Coroutine* cor = t_coroutine;
+    if(cor == this) SetThis(nullptr);
+    LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id" << m_id;
+}
+// 重置协程函数，并重置状态
+void Coroutine::reset(std::function<void()> callback){
+    OBELISK_ASSERT(m_stack);
+    OBELISK_ASSERT(m_state == TERM || m_state == INIT || m_state == ERROR);
+    m_callback = callback;
+    if(getcontext(&m_ctx))
+        OBELISK_ASSERT2(false, "getcontext");
+    
+    m_ctx.uc_link = nullptr;
+    m_ctx.uc_stack.ss_sp = m_stack;
+    m_ctx.uc_stack.ss_size = m_stacksize;
+
+    makecontext(&m_ctx, &Coroutine::start, 0);
+    m_state = INIT;
+}
+
+// 交换调用该函数的协程与正在CPU上执行的协程
+void Coroutine::swapIn(){
+    SetThis(this);
+    OBELISK_ASSERT(m_state != EXEC);
+
+    m_state = EXEC;
+    if(swapcontext(&t_thread_coroutine->m_ctx, &m_ctx)){
+        OBELISK_ASSERT2(false, "swapcontext");
+    }
+}
+// 当前协程切换至后台，主协程切换到前台
+void Coroutine::swapOut(){
+    SetThis(t_thread_coroutine.get());
+
+    if(swapcontext(&m_ctx, &t_thread_coroutine->m_ctx)){
+        OBELISK_ASSERT2(false, "swapcontext");
+    }
+}              
+
+void Coroutine::SetThis(Coroutine* c){
+    t_coroutine = c;
+}
+
+Coroutine::ptr Coroutine::GetSelf(){
+    if(t_coroutine)
+        return t_coroutine->shared_from_this();
+    Coroutine::ptr mainCoroutine(new Coroutine);
+    OBELISK_ASSERT(t_coroutine == mainCoroutine.get());
+    t_thread_coroutine = mainCoroutine;
+    return t_coroutine->shared_from_this();
+}
+
+uint64_t Coroutine::GetCoroutineId(){
+    if(t_coroutine)
+        return t_coroutine->getId();
+    return 0;
+}
+
+// 当前协程切换到后台，并设置Ready状态
+void Coroutine::YieldToReady(){
+    Coroutine::ptr cur = GetSelf();
+    cur->m_state = READY;
+    cur->swapOut();
+}
+
+// 协程切换到后台，并设置 Hold状态
+void Coroutine::YieldToHold(){
+    Coroutine::ptr cur = GetSelf();
+    cur->m_state = HOLD;
+    cur->swapIn();
+}    
+
+uint64_t Coroutine::Total(){
+    return s_coroutine_total;
+}
+
+void Coroutine::start(){
+    Coroutine::ptr cur = GetSelf();
+    OBELISK_ASSERT(cur);
+    try{
+        cur->m_callback();
+        cur->m_callback = nullptr;
+        cur->m_state = TERM;
+    }catch(std::exception& e){
+        cur->m_state = ERROR;
+        LOG_ERROR(g_logger) << "coroutine except: " << e.what();
+    }catch(...){
+        cur->m_state = ERROR;
+        LOG_ERROR(g_logger) << "coroutine except";
+    }
+}
+
+__END__

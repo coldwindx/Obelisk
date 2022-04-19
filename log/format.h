@@ -105,12 +105,12 @@ public:
 };
 
 /*--------------------------------协程信息格式化--------------------------------------*/
-class FiberIdFormat : public Format {
+class CoroutineIdFormat : public Format {
 public:
-	FiberIdFormat(const std::string & fmt = "") {}
+	CoroutineIdFormat(const std::string & fmt = "") {}
 	// 通过 Format 继承
 	virtual void format(std::ostream & os, LogEvent::ptr event) override {
-		os << event->getFiberId();
+		os << event->getCoroutineId();
 	}
 };
 

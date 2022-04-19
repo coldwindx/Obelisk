@@ -4,8 +4,8 @@
 #include "config/config.h"
 #include "thread/thread.h"
 #include "thread/mutex.h"
-#include "coroutine/utils.h"
-#include "coroutine/macro.h"
+#include "coroutine/coroutine_macro.h"
+#include "coroutine/coroutine.h"
 
 using namespace std;
 using namespace obelisk;
@@ -16,12 +16,12 @@ Mutex s_mutex;
 //RWMutex s_mutex;
 void test_config();
 void test_thread();
-void test_assert();
+void test_coroutine();
 
 int main()
 {
 	test_config();
-	test_assert();
+	test_coroutine();
 	return 0;
 }
 
@@ -79,7 +79,24 @@ void test_thread(){
 	LOG_INFO(LOG_SYSTEM()) << "thread test end";
 }
 
-void test_assert(){
-	//LOG_INFO(LOG_SYSTEM()) << endl << BacktraceToString(10, 0, "     ");
-	OBELISK_ASSERT2(false, "This is a assert");
+Logger::ptr g_logger = LOG_SYSTEM();
+
+void func4(){
+	LOG_INFO(g_logger) << "func4 run in coroutine begin";
+	//Coroutine::GetSelf()->swapOut();
+	Coroutine::YieldToReady();
+	LOG_INFO(g_logger) << "func4 run in coroutine end";
+	Coroutine::YieldToHold();
+}
+
+void test_coroutine(){
+	Coroutine::GetSelf();
+	LOG_INFO(g_logger) << "coroutine test begin";
+	Coroutine::ptr c(new Coroutine(func4));
+	LOG_INFO(g_logger) << "coroutine create success";
+	c->swapIn();
+	LOG_INFO(g_logger) << "coroutine after swapIn";
+	c->swapIn();
+	LOG_INFO(g_logger) << "coroutine test end";
+	
 }
