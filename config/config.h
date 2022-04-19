@@ -6,6 +6,7 @@
 #include <yaml-cpp/yaml.h>
 #include "system.h"
 #include "config_var.h"
+#include "log.h"
 #include "thread/mutex.h"
 
 __OBELISK__

@@ -100,7 +100,7 @@ public:
 	ThreadIdFormat(const std::string & fmt = "") {}
 	// 通过 Format 继承
 	virtual void format(std::ostream & os, LogEvent::ptr event) override {
-		os << std::hex << event->getThreadId();
+		os << std::hex << event->getThreadId() << std::dec;
 	}
 };
 

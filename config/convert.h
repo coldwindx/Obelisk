@@ -9,7 +9,7 @@
 #include <sstream>
 #include <boost/lexical_cast.hpp>
 #include <yaml-cpp/yaml.h>
-#include "../system.h"
+#include "system.h"
 
 __OBELISK__
 

@@ -88,8 +88,5 @@ private:
     bool m_locked;
 };
 
-/* 自旋锁[性能高，但消耗CPU] */
-
-/* 原子锁 */
 
 __END__

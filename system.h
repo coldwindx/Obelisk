@@ -1,12 +1,15 @@
 #pragma once
 
 #include <stdint.h>
-#include <thread>
-#include <sstream>
 #include <time.h>
+#include <sstream>
+#include <thread>
+
 
 #define __OBELISK__ namespace obelisk {
 #define __END__ }
+
+#define _USE_THREAD_ 1		// 启用线程安全
 
 __OBELISK__
 

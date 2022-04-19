@@ -6,7 +6,7 @@
 #include <map>
 #include "system.h"
 #include "convert.h"
-#include "log/log.h"
+#include "log.h"
 #include "thread/mutex.h"
 
 

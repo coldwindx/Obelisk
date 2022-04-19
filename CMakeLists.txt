@@ -7,6 +7,7 @@ SET(SRC_LIST
     main.cpp 
     log/log_formatter.cpp 
     log/logger.cpp 
+    log/log_initer.cpp
     config/config.cpp
     thread/thread.cpp)
 SET(LIBS pthread yaml-cpp)

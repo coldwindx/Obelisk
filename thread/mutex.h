@@ -4,8 +4,6 @@
 #include "lock.h"
 #include <atomic>
 
-#define _USE_THREAD_ 1
-
 __OBELISK__
 
 class Mutex;
