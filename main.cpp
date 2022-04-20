@@ -6,6 +6,7 @@
 #include "thread/mutex.h"
 #include "coroutine/coroutine_macro.h"
 #include "coroutine/coroutine.h"
+#include "coroutine/scheduler.h"
 
 using namespace std;
 using namespace obelisk;
@@ -17,11 +18,13 @@ Mutex s_mutex;
 void test_config();
 void test_thread();
 void test_coroutine();
+void test_schedule();
 
 int main()
 {
 	test_config();
-	test_coroutine();
+	//test_coroutine();
+	test_schedule();
 	return 0;
 }
 
@@ -97,11 +100,17 @@ void test_coroutine(){
 		LOG_INFO(g_logger) << "coroutine test begin";
 		Coroutine::ptr c(new Coroutine(func4));
 		LOG_INFO(g_logger) << "coroutine create success";
-		c->swapIn();
-		LOG_INFO(g_logger) << "coroutine after swapIn";
-		c->swapIn();
+		c->call();
+		LOG_INFO(g_logger) << "coroutine after call";
+		c->call();
 		LOG_INFO(g_logger) << "coroutine test end";
-		c->swapIn();
+		c->call();
 	}
 	LOG_INFO(g_logger) << "coroutine test in ended";
+}
+
+void test_schedule(){
+	Scheduler sc;
+	sc.start();
+	sc.stop();
 }

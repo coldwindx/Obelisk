@@ -22,10 +22,13 @@ public:
     ~Coroutine();
                                         // 重置协程函数，并重置状态
     void reset(std::function<void()> callback);
-    void swapIn();                      // 切换到当前协程执行
-    void swapOut();                     // 切换到后台执行
+    void call();                        // 与当前线程的主协程程切换，执行当前协程
+    void call(Coroutine* c);            // 与其他线程的c协程切换，执行当前协程
+    void back();                        // 切换到后台执行
 
     uint64_t getId() const { return m_id; }
+    State getState() const { return m_state; }
+    void setState(const State& state) { m_state = state; }
                                         
     static void SetThis(Coroutine* c);  // 设置当前协程
     static Coroutine::ptr GetSelf();    // 返回当前协程
@@ -34,7 +37,7 @@ public:
     static void YieldToHold();          // 协程切换到后台，并设置 Hold状态
 
     static uint64_t Total();            // 总协程数
-    static void start();
+    static void run();
 private:
     uint64_t m_id = 0;
     uint32_t m_stacksize = 0;

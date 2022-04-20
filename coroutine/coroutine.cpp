@@ -54,7 +54,7 @@ Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
         m_ctx.uc_stack.ss_sp = m_stack;
         m_ctx.uc_stack.ss_size = m_stacksize;
 
-        makecontext(&m_ctx, &Coroutine::start, 0);
+        makecontext(&m_ctx, &Coroutine::run, 0);
      //   LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
 }
 
@@ -86,12 +86,12 @@ void Coroutine::reset(std::function<void()> callback){
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stacksize;
 
-    makecontext(&m_ctx, &Coroutine::start, 0);
+    makecontext(&m_ctx, &Coroutine::run, 0);
     m_state = INIT;
 }
 
 // 交换调用该函数的协程与正在CPU上执行的协程
-void Coroutine::swapIn(){
+void Coroutine::call(){
     SetThis(this);
     OBELISK_ASSERT(m_state != EXEC);
 
@@ -100,8 +100,18 @@ void Coroutine::swapIn(){
         OBELISK_ASSERT2(false, "swapcontext");
     }
 }
+
+void Coroutine::call(Coroutine* c){
+    SetThis(this);
+    OBELISK_ASSERT(m_state != EXEC);
+
+    m_state = EXEC;
+    if(swapcontext(&c->m_ctx, &m_ctx)){
+        OBELISK_ASSERT2(false, "swapcontext");
+    }
+}
 // 当前协程切换至后台，主协程切换到前台
-void Coroutine::swapOut(){
+void Coroutine::back(){
     SetThis(t_thread_coroutine.get());
 
     if(swapcontext(&m_ctx, &t_thread_coroutine->m_ctx)){
@@ -132,21 +142,21 @@ uint64_t Coroutine::GetCoroutineId(){
 void Coroutine::YieldToReady(){
     Coroutine::ptr cur = GetSelf();
     cur->m_state = READY;
-    cur->swapOut();
+    cur->back();
 }
 
 // 当前协程切换到后台，并设置Ready状态
 void Coroutine::YieldToHold(){
     Coroutine::ptr cur = GetSelf();
     cur->m_state = HOLD;
-    cur->swapOut();
+    cur->back();
 }    
 
 uint64_t Coroutine::Total(){
     return s_coroutine_total;
 }
 
-void Coroutine::start(){
+void Coroutine::run(){
     Coroutine::ptr cur = GetSelf();
     OBELISK_ASSERT(cur);
     try{
@@ -163,7 +173,9 @@ void Coroutine::start(){
     // 换回主协程
     auto p = cur.get();
     cur.reset();            // 引用计数减一，防止引用计数器只增不减，
-    p->swapOut();           // 无法触发析构函数
+    p->back();           // 无法触发析构函数
+
+    OBELISK_ASSERT2(false, "never reach");
 }
 
 __END__

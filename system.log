@@ -1,0 +1,24 @@
+2022-04-20 19:01:44 [info] f7fe47c0 /home/workspace/Obelisk/main.cpp:58 config test begin 
+2022-04-20 19:02:55 [info] f7fe47c0 /home/workspace/Obelisk/main.cpp:58 config test begin 
+2022-04-20 19:04:31 [info] f7fe47c0 /home/workspace/Obelisk/main.cpp:58 config test begin 
+2022-04-20 19:04:31 [info] f7fe47c0(UNKNOW)|0 /home/workspace/Obelisk/main.cpp:62 name=coroutine.stack_size description=coroutine stack size typename=j value=1048576 
+2022-04-20 19:04:31 [info] f7fe47c0(UNKNOW)|0 /home/workspace/Obelisk/main.cpp:62 name=logs description=logs config typename=St3setIN7obelisk9LogConfigESt4lessIS1_ESaIS1_EE value=- name: root
+  level: info
+  appenders:
+    - type: FileLogAppender
+      file: ./root.log
+      level: info
+    - type: FileLogAppender
+      level: info
+- name: system
+  level: debug
+  format: "%d [%p] %t(%TN)|%F %f:%l %m %n"
+  appenders:
+    - type: FileLogAppender
+      file: ./system.log
+      level: debug
+    - type: FileLogAppender
+      level: debug 
+2022-04-20 19:04:31 [info] f7fe47c0(UNKNOW)|0 /home/workspace/Obelisk/main.cpp:67 config test end 
+2022-04-20 19:04:31 [info] f7fe47c0()|0 /home/workspace/Obelisk/coroutine/scheduler.cpp:68 0x7fffffffde80 stopped! 
+2022-04-20 19:04:31 [info] f7fe47c0()|0 /home/workspace/Obelisk/coroutine/scheduler.cpp:185 stopping 
