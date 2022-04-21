@@ -37,7 +37,7 @@ Coroutine::Coroutine(){
         OBELISK_ASSERT2(false, "getcontext");
     ++s_coroutine_total;
 
-  //  LOG_DEBUG(g_logger) << "Coroutine::Coroutine";
+    LOG_DEBUG(g_logger) << "Coroutine::Coroutine";
 }
 
 Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
@@ -55,7 +55,7 @@ Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
         m_ctx.uc_stack.ss_size = m_stacksize;
 
         makecontext(&m_ctx, &Coroutine::run, 0);
-     //   LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
+        LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
 }
 
 Coroutine::~Coroutine(){
@@ -63,7 +63,7 @@ Coroutine::~Coroutine(){
     if(m_stack){
         OBELISK_ASSERT(m_state == TERM || m_state == INIT || m_state == ERROR);
         MemoryAllocator::Free(m_stack, m_stacksize);
-       // LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id=" << m_id;
+       LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id=" << m_id;
         return;
     }
     // 没有栈空间，说明当前为主协程
@@ -72,7 +72,7 @@ Coroutine::~Coroutine(){
 
     Coroutine* cor = t_coroutine;
     if(cor == this) SetThis(nullptr);
-    //LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id=" << m_id;
+    LOG_DEBUG(g_logger) << "Coroutine::~Coroutine id=" << m_id;
 }
 // 重置协程函数，并重置状态
 void Coroutine::reset(std::function<void()> callback){
@@ -118,6 +118,13 @@ void Coroutine::back(){
         OBELISK_ASSERT2(false, "swapcontext");
     }
 }              
+void Coroutine::back(Coroutine* c){
+    SetThis(c);
+    if(swapcontext(&m_ctx, &c->m_ctx)){
+        OBELISK_ASSERT2(false, "swapcontext");
+    }
+}              
+
 
 void Coroutine::SetThis(Coroutine* c){
     t_coroutine = c;
@@ -138,19 +145,24 @@ uint64_t Coroutine::GetCoroutineId(){
     return 0;
 }
 
-// 当前协程切换到后台，并设置Ready状态
-void Coroutine::YieldToReady(){
+// 当前协程切换到后台
+void Coroutine::Yield(const State& state){
     Coroutine::ptr cur = GetSelf();
-    cur->m_state = READY;
-    cur->back();
-}
-
-// 当前协程切换到后台，并设置Ready状态
-void Coroutine::YieldToHold(){
-    Coroutine::ptr cur = GetSelf();
-    cur->m_state = HOLD;
+    cur->m_state = state;
     cur->back();
 }    
+// 当前协程切换到后台
+void Coroutine::Yield(const State& state, Coroutine * c){
+    Coroutine::ptr cur = GetSelf();
+    cur->m_state = state;
+    cur->back(c);
+}    
+
+void Coroutine::Yield(Coroutine* c){
+    Coroutine::ptr cur = GetSelf();
+    OBELISK_ASSERT(cur->m_state == EXEC);
+    cur->back(c);
+}
 
 uint64_t Coroutine::Total(){
     return s_coroutine_total;
@@ -173,7 +185,7 @@ void Coroutine::run(){
     // 换回主协程
     auto p = cur.get();
     cur.reset();            // 引用计数减一，防止引用计数器只增不减，
-    p->back();           // 无法触发析构函数
+    p->back();              // 无法触发析构函数
 
     OBELISK_ASSERT2(false, "never reach");
 }

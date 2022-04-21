@@ -87,9 +87,9 @@ Logger::ptr g_logger = LOG_SYSTEM();
 void func4(){
 	LOG_INFO(g_logger) << "func4 run in coroutine begin";
 	//Coroutine::GetSelf()->swapOut();
-	Coroutine::YieldToHold();
+	Coroutine::Yield(Coroutine::HOLD);
 	LOG_INFO(g_logger) << "func4 run in coroutine end";
-	Coroutine::YieldToHold();
+	Coroutine::Yield(Coroutine::HOLD);
 }
 
 void test_coroutine(){
@@ -111,6 +111,9 @@ void test_coroutine(){
 
 void test_schedule(){
 	Scheduler sc;
+	LOG_INFO(g_logger) << "begin start()!";
 	sc.start();
+	LOG_INFO(g_logger) << "after start()!";
 	sc.stop();
+	LOG_INFO(g_logger) << "after stop()!";
 }

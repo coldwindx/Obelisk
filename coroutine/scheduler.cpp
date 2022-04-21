@@ -19,7 +19,7 @@ Scheduler::Scheduler(size_t threadsize, bool use_caller, const std::string& name
         OBELISK_ASSERT(GetSelf() == nullptr);
         t_scheduler = this;
 
-        m_mainCoroutine.reset(new Coroutine(std::bind(&Scheduler::run, this)));
+        m_mainCoroutine.reset(new Coroutine(std::bind(&Scheduler::run, this), 0));
         Thread::SetName(m_name);
 
         t_main_coroutine = m_mainCoroutine.get();
@@ -68,6 +68,7 @@ void Scheduler::start(){
 
 void Scheduler::stop(){
     m_autostop = true;
+    LOG_DEBUG(g_logger) << "in Scheduler::stop()";
     if(m_mainCoroutine && m_threadCount == 0 
             && (m_mainCoroutine->getState() == Coroutine::TERM 
                     || m_mainCoroutine->getState() == Coroutine::INIT)){
@@ -124,15 +125,17 @@ void Scheduler::run(){
                    continue;
                }
                ft = *it;
-               m_coroutines.erase(it);
+               m_coroutines.erase(it++);
+               ++m_activeThreadCount;
+               break;
            }
+           tickleMe |= it != m_coroutines.end();
        }
         if(tickleMe)
             tickle();
         if(ft.coroutine && ft.coroutine->getState() != Coroutine::TERM 
                     && ft.coroutine->getState() != Coroutine::ERROR){
-            ++m_activeThreadCount;
-            ft.coroutine->call(GetMainCoroutine());
+            ft.coroutine->call(t_main_coroutine);
             --m_activeThreadCount;
 
             if(ft.coroutine->getState() == Coroutine::READY){
@@ -150,15 +153,14 @@ void Scheduler::run(){
             }
             ft.reset();
 
-            ++m_activeThreadCount;
-            cbCoroutine->call(GetMainCoroutine());
+            cbCoroutine->call(t_main_coroutine);
             --m_activeThreadCount;
 
             if(cbCoroutine->getState() == Coroutine::READY){
                 schedule(cbCoroutine);
                 cbCoroutine.reset();
             }else if(cbCoroutine->getState() == Coroutine::ERROR
-                    && cbCoroutine->getState() == Coroutine::TERM){
+                    || cbCoroutine->getState() == Coroutine::TERM){
                 cbCoroutine->reset(nullptr);
             }else {
                 cbCoroutine->setState(Coroutine::HOLD);
@@ -170,12 +172,13 @@ void Scheduler::run(){
                 break;
             }
             ++m_idleThreadCount;
-            idleCoroutine->call(GetMainCoroutine());
+            idleCoroutine->call(t_main_coroutine);
+            -- m_idleThreadCount;
             if(idleCoroutine->getState() != Coroutine::TERM
-                    || idleCoroutine->getState() != Coroutine::ERROR){
+                    && idleCoroutine->getState() != Coroutine::ERROR){
                 idleCoroutine->setState(Coroutine::HOLD);
             }
-            -- m_idleThreadCount;
+            
         }
    }
 }
@@ -195,5 +198,8 @@ bool Scheduler::stopping(){
 }
 void Scheduler::idle(){
     LOG_INFO(g_logger) << "idle";
+    while(!stopping()) {
+        Coroutine::Yield(t_main_coroutine);
+    }
 }
 __END__
