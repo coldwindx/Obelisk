@@ -198,8 +198,8 @@ bool Scheduler::stopping(){
 }
 void Scheduler::idle(){
     LOG_INFO(g_logger) << "idle";
-    while(!stopping()) {
-        Coroutine::Yield(t_main_coroutine);
-    }
+    // while(!stopping()) {
+    //     Coroutine::Yield(t_main_coroutine);
+    // }
 }
 __END__
