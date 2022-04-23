@@ -29,20 +29,17 @@ public:
     }
 };
 
-Coroutine::Coroutine(){
+Coroutine::Coroutine() : m_id(s_coroutine_id++){
     m_state = EXEC;
     SetThis(this);
     // 获取当前线程的上下文
     if(getcontext(&m_ctx))
         OBELISK_ASSERT2(false, "getcontext");
-    ++s_coroutine_total;
-
-    LOG_DEBUG(g_logger) << "Coroutine::Coroutine";
+    LOG_DEBUG(g_logger) << "Coroutine::Coroutine id=" << m_id;
 }
 
 Coroutine::Coroutine(std::function<void()> callback, size_t stacksize)
-    : m_id(++s_coroutine_id), m_callback(callback) {
-        ++s_coroutine_total;
+    : m_id(s_coroutine_id++), m_callback(callback) {
         if(0 == (m_stacksize = stacksize)) 
             m_stacksize = g_coroutine_stack_size->getValue();
         

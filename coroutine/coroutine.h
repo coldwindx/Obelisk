@@ -31,17 +31,17 @@ public:
     State getState() const { return m_state; }
     void setState(const State& state) { m_state = state; }
                                         
-    static void SetThis(Coroutine* c);      // 设置当前协程
-    static Coroutine::ptr GetSelf();        // 返回当前协程
-    static uint64_t GetCoroutineId();       // 返回当前协程ID
-    static void Yield(const State& state);  // 协程让出
+    static void SetThis(Coroutine* c);              // 设置当前协程
+    static Coroutine::ptr GetSelf();                // 返回当前协程
+    static uint64_t GetCoroutineId();               // 返回当前协程ID
+    static void Yield(const State& state = HOLD);   // 协程让出
 
-    static uint64_t Total();                // 总协程数
+    static uint64_t Total();                        // 总协程数
     static void run();
 private:
-    uint64_t m_id = 0;
-    uint32_t m_stacksize = 0;
-    State m_state = INIT;
+    uint64_t m_id = 0;                      // 协程ID
+    uint32_t m_stacksize = 0;               // 协程运行栈大小
+    State m_state = INIT;                   // 协程状态
 
     ucontext_t m_ctx;
     ucontext_t* m_recCtx = nullptr;

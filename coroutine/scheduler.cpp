@@ -1,4 +1,3 @@
-#include "log.h"
 #include "coroutine_macro.h"
 #include "scheduler.h"
 
@@ -7,33 +6,16 @@ __OBELISK__
 static Logger::ptr g_logger = LOG_SYSTEM();
 
 static thread_local Scheduler* t_scheduler = nullptr;
-static thread_local Coroutine* t_main_coroutine = nullptr;
 
-Scheduler::Scheduler(size_t threadsize, bool use_caller, const std::string& name)
-    : m_name(name) {
-    OBELISK_ASSERT(threadsize > 0);
-
-    if(use_caller){
-        Coroutine::GetSelf();       // 初始化一个主协程
-        --threadsize;
-        OBELISK_ASSERT(GetSelf() == nullptr);
-        t_scheduler = this;
-
-        m_mainCoroutine.reset(new Coroutine(std::bind(&Scheduler::run, this), 0));
-        Thread::SetName(m_name);
-
-        t_main_coroutine = m_mainCoroutine.get();
-        m_mainThreadId = thread_id();
-        m_threadIds.push_back(m_mainThreadId);
-    }else{
-        m_mainThreadId = -1;
-    }
+Scheduler::Scheduler(size_t threadsize, const std::string& name) 
+        : m_name(name){
+    OBELISK_ASSERT(0 < threadsize);
     m_threadCount = threadsize;
 }
 
 Scheduler::~Scheduler(){
     OBELISK_ASSERT(m_stopping);
-    if(GetSelf() == this)
+    if(this == GetSelf())
         t_scheduler = nullptr;
 }
 
@@ -41,165 +23,84 @@ Scheduler* Scheduler::GetSelf(){
     return t_scheduler;
 }
 
-Coroutine* Scheduler::GetMainCoroutine(){
-    return t_main_coroutine;
-}
-
 void Scheduler::start(){
     Lock lock(m_mutex);
-    if(!m_stopping) return ;
-    m_stopping = false;
-
+    if(m_stopping) return;
     OBELISK_ASSERT(m_threads.empty());
 
     m_threads.resize(m_threadCount);
     for(size_t i = 0; i < m_threadCount; ++i){
         m_threads[i].reset(new Thread(std::bind(&Scheduler::run, this)
-                    , m_name + "_" + std::to_string(i)));
-        m_threadIds.push_back(m_threads[i]->getId());
-    }
-    // 协程切换时，锁局部变量没释放，导致run方法拿不到锁，
-    lock.unlock();
-    if(m_mainCoroutine){
-        m_mainCoroutine->swapIn();
-        LOG_DEBUG(g_logger) << "call out";
+            , m_name + "-" + std::to_string(i)));
     }
 }
 
 void Scheduler::stop(){
-    m_autostop = true;
-    LOG_DEBUG(g_logger) << "in Scheduler::stop()";
-    if(m_mainCoroutine && m_threadCount == 0 
-            && (m_mainCoroutine->getState() == Coroutine::TERM 
-                    || m_mainCoroutine->getState() == Coroutine::INIT)){
-        LOG_INFO(g_logger) << this << " stopped!";
-        m_stopping = true;
-
-        if(stopping()) return ;
-    }
-   // bool exit_on_this_coroutine = false;
-    if(m_mainThreadId != -1){
-        OBELISK_ASSERT(GetSelf() == this);
-    }else{
-        OBELISK_ASSERT(GetSelf() != this);
-    }
     m_stopping = true;
-    for(size_t i = 0; i < m_threadCount; ++i){
-        tickle();
-    }
-
-    if(m_mainCoroutine){
-        tickle();
-    }
-    // if(exit_on_this_coroutine){
-
-    // }
+    for(size_t i = 0; i < m_threadCount; ++i)
+        m_threads[i]->join();
 }
+
+void Scheduler::schedule(std::function<void()> func, int threadId){
+    Lock lock(m_mutex);
+    Coroutine::ptr p(new Coroutine(func));
+    m_coroutines.push_back(std::make_pair(threadId, p));
+}
+
+void Scheduler::schedule(Coroutine::ptr c, int threadId){
+    Lock lock(m_mutex);
+    m_coroutines.push_back(std::make_pair(threadId, c));
+}
+
 
 void Scheduler::run(){
-    LOG_DEBUG(g_logger) << "Schedule::run()";
-   setThis();
-   if(thread_id() != m_mainThreadId){
-       t_main_coroutine = Coroutine::GetSelf().get();
-   }
-   Coroutine::ptr idleCoroutine(new Coroutine(std::bind(&Scheduler::idle, this)));
-   Coroutine::ptr cbCoroutine;
-
-    ThreadAndCoroutine ft;
-   while(true){
-       ft.reset();
-       bool tickleMe = false;
-       {
-           // 取出一个协程
-           Lock lock(m_mutex);
-           auto it = m_coroutines.begin();
-           while(it != m_coroutines.end()){
-               if(-1 != it->threadId && it->threadId != thread_id()){
-                   ++it;
-                   tickleMe = true;
-                   continue;
-               }
-               OBELISK_ASSERT(it->coroutine || it->callback);
-               if(it->coroutine && it->coroutine->getState() == Coroutine::EXEC){
-                   ++it;
-                   continue;
-               }
-               ft = *it;
-               m_coroutines.erase(it++);
-               ++m_activeThreadCount;
-               break;
-           }
-           tickleMe |= it != m_coroutines.end();
-       }
-        if(tickleMe)
-            tickle();
-        if(ft.coroutine && ft.coroutine->getState() != Coroutine::TERM 
-                    && ft.coroutine->getState() != Coroutine::ERROR){
-            ft.coroutine->swapIn(t_main_coroutine);
-            --m_activeThreadCount;
-
-            if(ft.coroutine->getState() == Coroutine::READY){
-                schedule(ft.coroutine);
-            }else if(ft.coroutine->getState() != Coroutine::TERM
-                    && ft.coroutine->getState() != Coroutine::ERROR){
-                ft.coroutine->setState(Coroutine::HOLD);
-            }
-            ft.reset();
-        }else if(ft.callback){
-            if(cbCoroutine){
-                cbCoroutine->reset(ft.callback);
-            }else{
-                cbCoroutine.reset(new Coroutine(ft.callback));
-            }
-            ft.reset();
-
-            cbCoroutine->swapIn(t_main_coroutine);
-            --m_activeThreadCount;
-
-            if(cbCoroutine->getState() == Coroutine::READY){
-                schedule(cbCoroutine);
-                cbCoroutine.reset();
-            }else if(cbCoroutine->getState() == Coroutine::ERROR
-                    || cbCoroutine->getState() == Coroutine::TERM){
-                cbCoroutine->reset(nullptr);
-            }else {
-                cbCoroutine->setState(Coroutine::HOLD);
-                cbCoroutine.reset();
-            }
-        }else{
-            if(idleCoroutine->getState() == Coroutine::TERM){
-                LOG_INFO(g_logger) << "idle coroutine term";
-                break;
-            }
-            ++m_idleThreadCount;
-            idleCoroutine->swapIn(t_main_coroutine);
-            -- m_idleThreadCount;
-            if(idleCoroutine->getState() != Coroutine::TERM
-                    && idleCoroutine->getState() != Coroutine::ERROR){
-                idleCoroutine->setState(Coroutine::HOLD);
-            }
-            
-        }
-   }
-}
-void Scheduler::setThis(){
     t_scheduler = this;
+
+    Coroutine::GetSelf();
+    Coroutine::ptr idleC(new Coroutine(std::bind(&Scheduler::idle, this)));
+    Coroutine::ptr c;
+    while(true){
+        c.reset();
+        {
+            Lock lock(m_mutex);
+            // 取出一个协程
+            auto it = m_coroutines.begin();
+            while(it != m_coroutines.end()){
+                if(-1 == it->first || thread_id() == it->first){
+                    c = it->second;
+                    m_coroutines.erase(it++);
+                    ++m_activeTaskCount;
+                    break;
+                }
+            }
+        }
+        // 有属于当前线程的任务
+        if(c != nullptr){  
+            ++m_activeThreadCount;    
+            c->swapIn();
+            --m_activeThreadCount;
+            --m_activeTaskCount;
+        }
+        // 如果闲置协程退出，则线程退出
+        Coroutine::State state = idleC->getState();
+        if(state == Coroutine::TERM || state == Coroutine::ERROR)
+            break;
+        // 否则，执行空闲任务
+        ++m_idleThreadCount;
+        idleC->swapIn();
+        --m_idleThreadCount;
+        continue;
+    }
 }
 
-
-void Scheduler::tickle(){
-    LOG_INFO(g_logger) << "tickle";
-}
-bool Scheduler::stopping(){
-    LOG_INFO(g_logger) << "stopping";
-    Lock lock(m_mutex);
-    return m_autostop && m_stopping && m_coroutines.empty()
-            && m_activeThreadCount == 0;
-}
 void Scheduler::idle(){
-    LOG_INFO(g_logger) << "idle";
-    // while(!stopping()) {
-    //     Coroutine::Yield(t_main_coroutine);
-    // }
+    while(!canStop()){
+        Coroutine::Yield();
+    }
+}
+
+bool Scheduler::canStop(){
+    Lock lock(m_mutex);
+    return m_stopping && (0 == m_activeTaskCount);
 }
 __END__

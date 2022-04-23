@@ -109,11 +109,28 @@ void test_coroutine(){
 	LOG_INFO(g_logger) << "coroutine test in ended";
 }
 
+void func5(){
+	LOG_INFO(g_logger) << "test in func5";
+	static int s_count = 5;
+	sleep(1);
+	while(--s_count > 0){
+		Scheduler::GetSelf()->schedule(&func5);
+	}
+}
+
 void test_schedule(){
-	Scheduler sc;
+	Scheduler sc(3, "test");
 	LOG_INFO(g_logger) << "begin start()!";
 	sc.start();
 	LOG_INFO(g_logger) << "after start()!";
+	sleep(2);
+
+	LOG_INFO(g_logger) << "begin schedule()!";
+	sc.schedule(&func5);
+	LOG_INFO(g_logger) << "after schedule()!";
+	sleep(2);
+
+	LOG_INFO(g_logger) << "begin stop()!";
 	sc.stop();
 	LOG_INFO(g_logger) << "after stop()!";
 }
