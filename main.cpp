@@ -100,11 +100,11 @@ void test_coroutine(){
 		LOG_INFO(g_logger) << "coroutine test begin";
 		Coroutine::ptr c(new Coroutine(func4));
 		LOG_INFO(g_logger) << "coroutine create success";
-		c->call();
+		c->swapIn();
 		LOG_INFO(g_logger) << "coroutine after call";
-		c->call();
+		c->swapIn();
 		LOG_INFO(g_logger) << "coroutine test end";
-		c->call();
+		c->swapIn();
 	}
 	LOG_INFO(g_logger) << "coroutine test in ended";
 }

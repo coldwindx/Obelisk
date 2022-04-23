@@ -23,10 +23,9 @@ public:
     ~Coroutine();
                                         // 重置协程函数，并重置状态
     void reset(std::function<void()> callback);
-    void call();                        // 与当前线程的主协程程切换，执行当前协程
-    void call(Coroutine* c);            // 与其他线程的c协程切换，执行当前协程
-    void back();                        // 切换到后台执行
-    void back(Coroutine* c);            // 与其他线程的c协程切换，执行c协程
+    void swapIn();                      // 协程换入，主协程换出
+    void swapIn(Coroutine * c);         // 协程换入，主协程换出
+    void swapOut();                     // 协程换出
 
     uint64_t getId() const { return m_id; }
     State getState() const { return m_state; }
@@ -35,9 +34,7 @@ public:
     static void SetThis(Coroutine* c);      // 设置当前协程
     static Coroutine::ptr GetSelf();        // 返回当前协程
     static uint64_t GetCoroutineId();       // 返回当前协程ID
-    static void Yield(const State& state);  // 协程切换到后台
-    static void Yield(const State& state, Coroutine* c);
-    static void Yield(Coroutine* c);
+    static void Yield(const State& state);  // 协程让出
 
     static uint64_t Total();                // 总协程数
     static void run();
@@ -47,6 +44,7 @@ private:
     State m_state = INIT;
 
     ucontext_t m_ctx;
+    ucontext_t* m_recCtx = nullptr;
     void* m_stack = nullptr;
 
     std::function<void()> m_callback;

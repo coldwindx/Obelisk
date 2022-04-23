@@ -61,7 +61,7 @@ void Scheduler::start(){
     // 协程切换时，锁局部变量没释放，导致run方法拿不到锁，
     lock.unlock();
     if(m_mainCoroutine){
-        m_mainCoroutine->call();
+        m_mainCoroutine->swapIn();
         LOG_DEBUG(g_logger) << "call out";
     }
 }
@@ -135,7 +135,7 @@ void Scheduler::run(){
             tickle();
         if(ft.coroutine && ft.coroutine->getState() != Coroutine::TERM 
                     && ft.coroutine->getState() != Coroutine::ERROR){
-            ft.coroutine->call(t_main_coroutine);
+            ft.coroutine->swapIn(t_main_coroutine);
             --m_activeThreadCount;
 
             if(ft.coroutine->getState() == Coroutine::READY){
@@ -153,7 +153,7 @@ void Scheduler::run(){
             }
             ft.reset();
 
-            cbCoroutine->call(t_main_coroutine);
+            cbCoroutine->swapIn(t_main_coroutine);
             --m_activeThreadCount;
 
             if(cbCoroutine->getState() == Coroutine::READY){
@@ -172,7 +172,7 @@ void Scheduler::run(){
                 break;
             }
             ++m_idleThreadCount;
-            idleCoroutine->call(t_main_coroutine);
+            idleCoroutine->swapIn(t_main_coroutine);
             -- m_idleThreadCount;
             if(idleCoroutine->getState() != Coroutine::TERM
                     && idleCoroutine->getState() != Coroutine::ERROR){

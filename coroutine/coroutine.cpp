@@ -90,41 +90,27 @@ void Coroutine::reset(std::function<void()> callback){
     m_state = INIT;
 }
 
-// 交换调用该函数的协程与正在CPU上执行的协程
-void Coroutine::call(){
+void Coroutine::swapIn(){
     SetThis(this);
-    OBELISK_ASSERT(m_state != EXEC);
-
     m_state = EXEC;
-    if(swapcontext(&t_thread_coroutine->m_ctx, &m_ctx)){
-        OBELISK_ASSERT2(false, "swapcontext");
-    }
+    m_recCtx = nullptr;
+    swapcontext(&t_thread_coroutine->m_ctx, &m_ctx);
 }
 
-void Coroutine::call(Coroutine* c){
+void Coroutine::swapIn(Coroutine * c){
     SetThis(this);
-    OBELISK_ASSERT(m_state != EXEC);
-
     m_state = EXEC;
-    if(swapcontext(&c->m_ctx, &m_ctx)){
-        OBELISK_ASSERT2(false, "swapcontext");
-    }
+    m_recCtx = &c->m_ctx;
+    swapcontext(&c->m_ctx, &m_ctx);
 }
-// 当前协程切换至后台，主协程切换到前台
-void Coroutine::back(){
-    SetThis(t_thread_coroutine.get());
 
-    if(swapcontext(&m_ctx, &t_thread_coroutine->m_ctx)){
-        OBELISK_ASSERT2(false, "swapcontext");
-    }
-}              
-void Coroutine::back(Coroutine* c){
-    SetThis(c);
-    if(swapcontext(&m_ctx, &c->m_ctx)){
-        OBELISK_ASSERT2(false, "swapcontext");
-    }
-}              
-
+void Coroutine::swapOut(){
+    SetThis(this);
+    if(m_recCtx)
+        swapcontext(&m_ctx, m_recCtx);
+    else
+        swapcontext(&m_ctx, &t_thread_coroutine->m_ctx);
+}
 
 void Coroutine::SetThis(Coroutine* c){
     t_coroutine = c;
@@ -149,20 +135,8 @@ uint64_t Coroutine::GetCoroutineId(){
 void Coroutine::Yield(const State& state){
     Coroutine::ptr cur = GetSelf();
     cur->m_state = state;
-    cur->back();
+    cur->swapOut();
 }    
-// 当前协程切换到后台
-void Coroutine::Yield(const State& state, Coroutine * c){
-    Coroutine::ptr cur = GetSelf();
-    cur->m_state = state;
-    cur->back(c);
-}    
-
-void Coroutine::Yield(Coroutine* c){
-    Coroutine::ptr cur = GetSelf();
-    OBELISK_ASSERT(cur->m_state == EXEC);
-    cur->back(c);
-}
 
 uint64_t Coroutine::Total(){
     return s_coroutine_total;
@@ -184,8 +158,8 @@ void Coroutine::run(){
     }
     // 换回主协程
     auto p = cur.get();
-    cur.reset();            // 引用计数减一，防止引用计数器只增不减，
-    p->back();              // 无法触发析构函数
+    cur.reset();                // 引用计数减一，防止引用计数器只增不减，
+    p->swapOut();               // 无法触发析构函数
 
     OBELISK_ASSERT2(false, "never reach");
 }
