@@ -17,6 +17,7 @@ public:
     virtual ~Scheduler();
 
     const std::string& getName() { return m_name; }
+    int getActiveThreadCount() const { return m_activeThreadCount; }
     static Scheduler* GetSelf();
 
     void start();                                   // 开启调度器，初始化线程池
@@ -28,6 +29,7 @@ protected:
     void run();                                     // 线程执行逻辑  
     virtual void idle();                            // 线程空跑 
     virtual bool canStop();                         // 线程终止条件
+    virtual void tickle(){}                         // 首次添加任务时的触发函数
 private:
     Mutex m_mutex;
     std::vector<Thread::ptr> m_threads;             // 线程池      

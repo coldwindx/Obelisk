@@ -9,7 +9,7 @@ class IOManager : public Scheduler{
 public:
     typedef std::shared_ptr<IOManager> ptr;
 
-    enum Event{ NONE = 0x0, READ = 0x1, WRITE = 0x3 };
+    enum Event{ NONE = 0x0, READ = 0x1, WRITE = 0x4 };
 private:
     struct FdContext{
         struct EventContext{

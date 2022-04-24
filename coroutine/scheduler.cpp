@@ -44,16 +44,19 @@ void Scheduler::stop(){
 void Scheduler::schedule(std::function<void()> func, int threadId){
     Lock lock(m_mutex);
     Coroutine::ptr p(new Coroutine(func));
+    if(m_coroutines.empty()) tickle();
     m_coroutines.push_back(std::make_pair(threadId, p));
 }
 
 void Scheduler::schedule(Coroutine::ptr c, int threadId){
     Lock lock(m_mutex);
+    if(m_coroutines.empty()) tickle();
     m_coroutines.push_back(std::make_pair(threadId, c));
 }
 
 
 void Scheduler::run(){
+    LOG_DEBUG(g_logger) << "Scheduler::run()";
     t_scheduler = this;
 
     Coroutine::GetSelf();

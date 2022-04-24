@@ -3,6 +3,8 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include "log.h"
+#include "coroutine_macro.h"
 #include "iomanager.h"
 
 __OBELISK__
@@ -26,12 +28,12 @@ void IOManager::FdContext::triggerEvent(IOManager::Event event){
     OBELISK_ASSERT(this->event & event);
     this->event = (Event)(this->event & ~event);
     EventContext& ctx = getContext(event);
-    if(ctx.callback){
-        ctx.scheduler->schedule(&ctx.callback);
-    }else{
-        ctx.scheduler->schedule(&ctx.coroutine);
-    }
-    ctx.scheduler = nullptr;
+
+    Scheduler* scheduler = Scheduler::GetSelf();
+    if(ctx.callback)
+        scheduler->schedule(ctx.callback);
+    if(ctx.coroutine)
+        scheduler->schedule(ctx.coroutine);
 }
 
 
@@ -41,7 +43,7 @@ IOManager::IOManager(size_t threadsize, const std::string& name)
     OBELISK_ASSERT(0 < m_epfd);
     
     int rt = pipe(m_tickleFds);
-    OBELISK_ASSERT(rt);
+    OBELISK_ASSERT(!rt);
 
     epoll_event event;
     memset(&event, 0, sizeof(epoll_event));
@@ -49,10 +51,10 @@ IOManager::IOManager(size_t threadsize, const std::string& name)
     event.data.fd = m_tickleFds[0];
 
     rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);
-    OBELISK_ASSERT(rt);
+    OBELISK_ASSERT(!rt);
 
     rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
-    OBELISK_ASSERT(rt);
+    OBELISK_ASSERT(!rt);
 
     resizeContext(32);
     this->start();
@@ -64,7 +66,7 @@ IOManager::~IOManager(){
     close(m_tickleFds[0]);
     close(m_tickleFds[1]);
 
-    for(size_t i = 0, m_fdContexts.size(); i < n; ++i){
+    for(size_t i = 0, n = m_fdContexts.size(); i < n; ++i){
         if(m_fdContexts[i]){
             delete m_fdContexts[i];
         }
@@ -74,20 +76,20 @@ IOManager::~IOManager(){
 int IOManager::addEvent(int fd, Event event, std::function<void()> callback){
     FdContext* fdCtx = nullptr;
     ReadLock lock(m_rwMutex);
-    if(fd < m_fdContexts.size()){
+    if(fd < (int)m_fdContexts.size()){
         fdCtx = m_fdContexts[fd];
         lock.unlock();
     }else{
         lock.unlock();
         WriteLock lock(m_rwMutex);
-        resizeContext(1.5 * m_fdContexts.size());
+        resizeContext(1.5 * fd);
         fdCtx = m_fdContexts[fd];
     }
 
-    Lock lock2(fd_ctx->mutex);
+    Lock lock2(fdCtx->mutex);
     if(fdCtx->event & event){
-        LOG_ERROR(g_logger) << "addEvent assert fd=" << fd 
-                " ,event=" << event << " ,fd_ctx.event=" << fdCtx->event;
+        LOG_ERROR(g_logger) << "addEvent assert fd=" << fd  
+                << " ,event=" << event << " ,fd_ctx.event=" << fdCtx->event;
         OBELISK_ASSERT(!(fdCtx->event & event));
     }
 
@@ -111,7 +113,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> callback){
 
     eventCtx.scheduler = Scheduler::GetSelf();
     if(callback){
-        eventCtx.callback.swap(cb);
+        eventCtx.callback.swap(callback);
     }else{
         eventCtx.coroutine = Coroutine::GetSelf();
         OBELISK_ASSERT(eventCtx.coroutine->getState() == Coroutine::EXEC);
@@ -178,7 +180,7 @@ bool IOManager::cancelEvent(int fd, Event event){
         return false;
     }
 
-    eventCtx->triggerEvent(event);
+    fdCtx->triggerEvent(event);
     --m_pendingEventCount;
     return true;
 }
@@ -206,12 +208,12 @@ bool IOManager::cancelAll(int fd){
     }
 
     if(fdCtx->event & READ){
-        eventCtx->triggerEvent(READ);
+        fdCtx->triggerEvent(READ);
         --m_pendingEventCount;
     }
 
     if(fdCtx->event & WRITE){
-        eventCtx->triggerEvent(WRITE);
+        fdCtx->triggerEvent(WRITE);
         --m_pendingEventCount;
     }
 
@@ -223,9 +225,82 @@ IOManager* IOManager::GetSelf(){
     return dynamic_cast<IOManager*>(Scheduler::GetSelf());
 }
 
-void IOManager::tickle();
-bool IOManager::canStop();
-void IOManager::idle();
+void IOManager::tickle(){
+    if(0 == getActiveThreadCount())
+        return;
+    int rt = write(m_tickleFds[1], "T", 1);
+    OBELISK_ASSERT(rt == 1);
+    
+}
+bool IOManager::canStop(){
+    return Scheduler::canStop() && (m_pendingEventCount == 0);
+}
+void IOManager::idle(){
+    epoll_event* events = new epoll_event[64];
+    std::shared_ptr<epoll_event> sharedEvents(events, std::default_delete<epoll_event[]>());
+    while(true){
+        if(canStop()){
+            LOG_INFO(g_logger) << "name=" << getName() << " idle stopping exit";
+            break;
+        }
+        int rt = 0;
+        do{
+            static const int MAX_TIMEOUT = 5000;
+            rt = epoll_wait(m_epfd, events, 64, MAX_TIMEOUT);
+        }while(rt < 0 && errno == EINTR);   
+            
+        for(size_t i = 0; i < rt; ++i){
+            epoll_event& event = events[i];
+            if(event.data.fd == m_tickleFds[0]){
+                uint8_t dummy;
+                while(1 == read(m_tickleFds[0], &dummy, 1)){}
+                continue;
+            }
+            FdContext* fdCtx = (FdContext*)event.data.ptr;
+            Lock lock(fdCtx->mutex);
+            if(event.events & (EPOLLERR | EPOLLHUP)){
+                event.events |= EPOLLOUT | EPOLLIN;
+            }
+            int realEvent = NONE;
+            if(event.events & EPOLLIN){
+                realEvent |= READ;
+            }
+            if(event.events & EPOLLOUT){
+                realEvent |= WRITE;
+            }
+
+            if(fdCtx->event & realEvent == NONE){
+                continue;
+            }
+            int leftEvents = (fdCtx->event & ~realEvent);
+            int op = leftEvents ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
+
+            event.events = EPOLLET | leftEvents;
+
+            int rt2 = epoll_ctl(m_epfd, op, fdCtx->fd, &event);
+            if(rt2){
+                LOG_ERROR(g_logger) << "epoll_ctl(" << m_epfd << ", " << op
+                    << ", " << fdCtx->fd << ", " << event.events << "): " << rt2
+                    << " {" << errno << "} {" << strerror(errno) << "}";
+                continue;
+            }
+
+            if(realEvent & READ){
+                fdCtx->triggerEvent(READ);
+                --m_pendingEventCount;
+            }
+            if(realEvent & WRITE){
+                fdCtx->triggerEvent(WRITE);
+                --m_pendingEventCount;
+            }
+        }
+        Coroutine::ptr c = Coroutine::GetSelf();
+        auto raw = c.get();
+        c.reset();
+
+        raw->swapOut();
+    }
+}
 void IOManager::resizeContext(size_t size){
     m_fdContexts.resize(size);
     for(size_t i = 0, n = m_fdContexts.size(); i < n; ++i){

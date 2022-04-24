@@ -11,7 +11,8 @@ SET(SRC_LIST
     config/config.cpp
     thread/thread.cpp
     coroutine/coroutine.cpp
-    coroutine/scheduler.cpp)
+    coroutine/scheduler.cpp
+    coroutine/iomanager.cpp)
 SET(LIBS pthread yaml-cpp)
 
 LINK_DIRECTORIES(/usr/local/lib64)

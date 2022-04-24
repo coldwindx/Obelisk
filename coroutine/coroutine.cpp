@@ -125,7 +125,7 @@ Coroutine::ptr Coroutine::GetSelf(){
 uint64_t Coroutine::GetCoroutineId(){
     if(t_coroutine)
         return t_coroutine->getId();
-    return 0;
+    return -1;
 }
 
 // 当前协程切换到后台
