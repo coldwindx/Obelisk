@@ -3,6 +3,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <algorithm>
 #include "log.h"
 #include "coroutine_macro.h"
 #include "iomanager.h"
@@ -233,22 +234,44 @@ void IOManager::tickle(){
     
 }
 bool IOManager::canStop(){
-    return Scheduler::canStop() && (m_pendingEventCount == 0);
+    return Scheduler::canStop() 
+        && (m_pendingEventCount == 0)
+        && empty();
+}
+
+bool IOManager::canStop(uint64_t& timeout){
+    timeout = getNextTimer();
+    return Scheduler::canStop() 
+        && (m_pendingEventCount == 0)
+        && (timeout == ~0ul);
 }
 void IOManager::idle(){
     epoll_event* events = new epoll_event[64];
     std::shared_ptr<epoll_event> sharedEvents(events, std::default_delete<epoll_event[]>());
     while(true){
-        if(canStop()){
+        uint64_t nextTimeout = 0;
+        if(canStop(nextTimeout)){
             LOG_INFO(g_logger) << "name=" << getName() << " idle stopping exit";
             break;
         }
+    
         int rt = 0;
         do{
-            static const int MAX_TIMEOUT = 5000;
-            rt = epoll_wait(m_epfd, events, 64, MAX_TIMEOUT);
+            static const int MAX_TIMEOUT = 3000;
+            if(~0ul == nextTimeout)
+                nextTimeout = MAX_TIMEOUT;
+            if(MAX_TIMEOUT < (int)nextTimeout)
+                nextTimeout = MAX_TIMEOUT;
+            rt = epoll_wait(m_epfd, events, 64, nextTimeout);
         }while(rt < 0 && errno == EINTR);   
             
+        std::vector<std::function<void()> > cbs;
+        listExpiredCallback(cbs);
+        if(!cbs.empty()){
+            schedule(cbs.begin(), cbs.end());
+            cbs.clear();
+        }
+
         for(size_t i = 0; i < rt; ++i){
             epoll_event& event = events[i];
             if(event.data.fd == m_tickleFds[0]){
@@ -309,5 +332,9 @@ void IOManager::resizeContext(size_t size){
             m_fdContexts[i]->fd = i;
         }
     }
+}
+
+void IOManager::onTimerInsertAtFront() {
+    tickle();
 }
 __END__

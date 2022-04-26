@@ -25,6 +25,23 @@ public:
 
     void schedule(std::function<void()> func, int threadId = -1);
     void schedule(Coroutine::ptr c, int threadId = -1);
+    template<typename Iterator>
+    void schedule(Iterator begin, Iterator end, int threadId = -1){
+        static struct Adapter{
+            Coroutine::ptr operator()(Coroutine::ptr c){
+                return c;
+            }
+            Coroutine::ptr operator()(std::function<void()> callback){
+                return Coroutine::ptr(new Coroutine(callback));
+            }
+        } adapter;
+        Lock lock(m_mutex);
+        if(m_coroutines.empty()) tickle();
+        for(Iterator it = begin; it != end; ++it){
+            Coroutine::ptr c = adapter(*it);
+            m_coroutines.push_back(std::make_pair(threadId, c));
+        }
+    }
 protected:
     void run();                                     // 线程执行逻辑  
     virtual void idle();                            // 线程空跑 

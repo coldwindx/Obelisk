@@ -2,10 +2,11 @@
 
 #include "system.h"
 #include "scheduler.h"
+#include "timer.h"
 
 __OBELISK__
 
-class IOManager : public Scheduler{
+class IOManager : public Scheduler, public TimerManager{
 public:
     typedef std::shared_ptr<IOManager> ptr;
 
@@ -42,8 +43,10 @@ public:
 protected:
     void tickle() override;
     bool canStop() override;
+    bool canStop(uint64_t& timeout);
     void idle() override;
     void resizeContext(size_t size);
+    virtual void onTimerInsertAtFront() override;       // 继承自TimerManager
 private:
     int m_epfd = 0;
     int m_tickleFds[2];

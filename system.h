@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <sys/time.h>
 #include <sstream>
 #include <thread>
 
@@ -18,4 +19,15 @@ static uint32_t thread_id(){
 	return std::stoull(ss.str());
 }
 
+static uint64_t GetCurrentMS(){
+	static timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * 1000ul + tv.tv_usec / 1000;
+}
+
+static uint64_t GetCurrentUS(){
+	static timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec * 1000 * 1000ul + tv.tv_usec;
+}
 __END__

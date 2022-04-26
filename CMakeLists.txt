@@ -2,6 +2,7 @@ PROJECT(OBELISK)
 
 INCLUDE_DIRECTORIES(/usr/include)
 INCLUDE_DIRECTORIES(./)
+INCLUDE_DIRECTORIES(./include)
 
 SET(SRC_LIST    
     main.cpp 
@@ -12,7 +13,8 @@ SET(SRC_LIST
     thread/thread.cpp
     coroutine/coroutine.cpp
     coroutine/scheduler.cpp
-    coroutine/iomanager.cpp)
+    coroutine/iomanager.cpp
+    src/timer.cpp)
 SET(LIBS pthread yaml-cpp)
 
 LINK_DIRECTORIES(/usr/local/lib64)

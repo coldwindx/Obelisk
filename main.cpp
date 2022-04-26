@@ -36,13 +36,21 @@ void test1(){
         LOG_INFO(g_logger) << "write callback";
         IOManager::GetSelf()->cancelEvent(sock, IOManager::READ);
     });
-    
-
 }
 
+void test_timer(){
+    IOManager iom(2);
+    Timer::ptr timer = iom.addTimer(500, [&timer](){
+        LOG_INFO(g_logger) << "hello,timer!";
+        static int i = 0;
+        if(++i == 5)
+            timer->cancel();
+    }, true);
+}
 int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
-    test1();
+    //test1();
+    test_timer();
     return 0;
 }
