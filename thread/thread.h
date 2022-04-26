@@ -8,6 +8,8 @@
 
 __OBELISK__
 
+using Callback = std::function<void()>; 
+
 class Thread{
 public:
     typedef std::shared_ptr<Thread> ptr;

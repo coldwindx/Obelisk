@@ -12,7 +12,7 @@ SET(SRC_LIST
     config/config.cpp
     thread/thread.cpp
     coroutine/coroutine.cpp
-    coroutine/scheduler.cpp
+    src/scheduler.cpp
     coroutine/iomanager.cpp
     src/timer.cpp
     src/hook.cpp)

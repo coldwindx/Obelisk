@@ -44,14 +44,14 @@ void test_hook(){
     LOG_INFO(g_logger) << "test_hook begin";
     IOManager manager(1);
     manager.schedule([](){
-        sleep(2);
+       // sleep(2);
         LOG_INFO(g_logger) << "sleep 2s";
     });
     manager.schedule([](){
-        sleep(3);
+        //sleep(3);
         LOG_INFO(g_logger) << "sleep 3s";
     });
-    manager.stop();
+    //manager.stop();
     LOG_INFO(g_logger) << "test_hook end";
 }
 
@@ -68,7 +68,7 @@ int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
     //test1();
-    //test_timer();
-    test_hook();
+    test_timer();
+    //test_hook();
     return 0;
 }
