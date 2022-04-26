@@ -14,8 +14,9 @@ SET(SRC_LIST
     coroutine/coroutine.cpp
     coroutine/scheduler.cpp
     coroutine/iomanager.cpp
-    src/timer.cpp)
-SET(LIBS pthread yaml-cpp)
+    src/timer.cpp
+    src/hook.cpp)
+SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)
 
