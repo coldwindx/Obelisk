@@ -58,11 +58,22 @@ void Scheduler::schedule(Coroutine::ptr c, int threadId){
 
 void Scheduler::run(){
     LOG_DEBUG(g_logger) << "Scheduler::run()";
-    set_hook_enable(true);
+    // set_hook_enable(true);
     t_scheduler = this;
 
-    Coroutine::ptr main = Coroutine::GetSelf();
-    std::list<Coroutine::ptr> coroutines;
+    Coroutine::GetSelf();
+    std::list<Coroutine*> pool;                          // 空闲协程池
+    Coroutine::ptr idleC(new Coroutine(std::bind(&Scheduler::idle, this)));
+    
+    static auto fetch = [&](Callback cb){
+        if(pool.empty()){
+            Coroutine* c = new Coroutine(cb);
+            return Coroutine::ptr(c, [&](Coroutine* p){ pool.push_back(p); });
+        }
+        Coroutine* c = pool.front();
+        pool.pop_front();
+        return Coroutine::ptr(c, [&](Coroutine* p){ pool.push_back(p); });
+    };
 
     Task task;
     while(true){
@@ -79,57 +90,30 @@ void Scheduler::run(){
                 }
             }
         }
-        // 有属于当前线程的任务
+        // 为任务分配一个协程
+        if(task.callback)
+            task.coroutine = fetch(task.callback);
+        // 处理协程任务
         if(task.coroutine){
             ++m_activeThreadCount;
-            task.coroutine->swapIn(main.get());
+            task.coroutine->swapIn();
             --m_activeThreadCount;
             --m_executingTaskCount;
             if(task.coroutine->getState() == Coroutine::READY)
                 this->schedule(task.coroutine, task.threadId);             
             continue;
         }
-
-        if(task.callback){
-            if(coroutines.empty())
-                task.coroutine = Coroutine::ptr(new Coroutine(task.callback));
-            else{
-                task.coroutine = coroutines.front();
-                coroutines.pop_front();
-                task.coroutine->reset(task.callback);
-            }
-            ++m_activeThreadCount;
-            task.coroutine->swapIn(main.get());
-            --m_activeThreadCount;
-            --m_executingTaskCount;
-            Coroutine::State state = task.coroutine->getState();
-            if(state == Coroutine::READY)
-                this->schedule(task.coroutine, task.threadId);
-            if(state == Coroutine::TERM || state == Coroutine::ERROR)
-                coroutines.push_back(task.coroutine);
-            task.reset();
-            continue;
-        }
-
-        // 如果闲置协程退出，则线程退出
-        if(coroutines.empty())
-            task.coroutine = Coroutine::ptr(new Coroutine(std::bind(&Scheduler::idle, this)));
-        else{
-            task.coroutine = coroutines.front();
-            coroutines.pop_front();
-            task.coroutine->reset(std::bind(&Scheduler::idle, this));
-        }
+        // 没有任务时处理闲置任务
         ++m_idleThreadCount;
-        task.coroutine->swapIn(main.get());
+        idleC->swapIn();
         --m_idleThreadCount;
-        Coroutine::State state = task.coroutine->getState();
+        Coroutine::State state = idleC->getState();
+        // 如果闲置协程退出，则线程退出
         if(state == Coroutine::TERM)
             break;
-        if(state == Coroutine::HOLD){
-            task.coroutine->reset(nullptr);
-            coroutines.push_back(task.coroutine);
-        }
     }
+    // 结束时释放协程队列
+    for(auto & p : pool) delete p;
 }
 
 void Scheduler::idle(){

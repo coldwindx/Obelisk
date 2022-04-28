@@ -55,7 +55,7 @@ protected:
 private:
     Mutex m_mutex;
     std::vector<Thread::ptr> m_threads;             // 线程池      
-    std::list<Task> m_tasks;                        // 任务队列
+    std::list<Task> m_tasks;              // 协程任务队列
     std::string m_name;
 protected:
     size_t m_threadCount = 0;
