@@ -58,7 +58,7 @@ void Scheduler::schedule(Coroutine::ptr c, int threadId){
 
 void Scheduler::run(){
     LOG_DEBUG(g_logger) << "Scheduler::run()";
-    // set_hook_enable(true);
+    //set_hook_enable(true);
     t_scheduler = this;
 
     Coroutine::GetSelf();

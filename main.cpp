@@ -33,6 +33,7 @@ void test1(){
     iom.addEvent(sock, IOManager::READ, [](){
         LOG_INFO(g_logger) << "read callback";
     });
+    
     iom.addEvent(sock, IOManager::WRITE, [&](){
         LOG_INFO(g_logger) << "write callback";
         IOManager::GetSelf()->cancelEvent(sock, IOManager::READ);
@@ -42,8 +43,7 @@ void test1(){
 
 void test_hook(){
     LOG_INFO(g_logger) << "test_hook begin";
-    Scheduler manager(2);
-    manager.start();
+    IOManager manager(2);
     manager.schedule([](){
         sleep(2);
         LOG_INFO(g_logger) << "sleep 2s";
@@ -52,7 +52,6 @@ void test_hook(){
         sleep(3);
         LOG_INFO(g_logger) << "sleep 3s";
     });
-    manager.stop();
     LOG_INFO(g_logger) << "test_hook end";
 }
 
@@ -68,8 +67,8 @@ void test_timer(){
 int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
-    //test1();
+    test1();
     //test_timer();
-    test_hook();
+    //test_hook();
     return 0;
 }

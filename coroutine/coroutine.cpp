@@ -102,11 +102,9 @@ void Coroutine::swapIn(Coroutine * c){
 }
 
 void Coroutine::swapOut(){
-    SetThis(this);
-    if(m_recCtx)
-        swapcontext(&m_ctx, m_recCtx);
-    else
-        swapcontext(&m_ctx, &t_thread_coroutine->m_ctx);
+    SetThis(t_thread_coroutine.get());
+    if(swapcontext(&m_ctx, &t_thread_coroutine->m_ctx))
+        OBELISK_ASSERT2(false, "swapcontext");  
 }
 
 void Coroutine::SetThis(Coroutine* c){
