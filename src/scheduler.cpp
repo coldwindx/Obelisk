@@ -58,7 +58,7 @@ void Scheduler::schedule(Coroutine::ptr c, int threadId){
 
 void Scheduler::run(){
     LOG_DEBUG(g_logger) << "Scheduler::run()";
-    //set_hook_enable(true);
+    set_hook_enable(true);
     t_scheduler = this;
 
     Coroutine::GetSelf();
@@ -72,6 +72,7 @@ void Scheduler::run(){
         }
         Coroutine* c = pool.front();
         pool.pop_front();
+        c->reset(cb);
         return Coroutine::ptr(c, [&](Coroutine* p){ pool.push_back(p); });
     };
 
@@ -96,7 +97,9 @@ void Scheduler::run(){
         // 处理协程任务
         if(task.coroutine){
             ++m_activeThreadCount;
+            // LOG_DEBUG(g_logger) << "coroutine id=" << task.coroutine->getId() << " swap in";
             task.coroutine->swapIn();
+            // LOG_DEBUG(g_logger) << "coroutine id=" << task.coroutine->getId() << " swap out";
             --m_activeThreadCount;
             --m_executingTaskCount;
             if(task.coroutine->getState() == Coroutine::READY)

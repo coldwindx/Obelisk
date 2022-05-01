@@ -67,8 +67,8 @@ void test_timer(){
 int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
-    test1();
+    //test1();
     //test_timer();
-    //test_hook();
+    test_hook();
     return 0;
 }
