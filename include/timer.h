@@ -53,7 +53,7 @@ private:
     bool detectClockRollover(uint64_t nowMs);           // 检测系统时间的修改
 private:
     RWMutex m_rwmutex;
-    std::set<Timer::ptr> m_timers;
+    std::set<Timer::ptr, Timer::Comparator> m_timers;
     bool m_tickled = false;
     uint64_t m_previouseTime = 0;
 };

@@ -48,7 +48,7 @@ extern "C"{
         obelisk::Coroutine::ptr c = obelisk::Coroutine::GetSelf();
         obelisk::IOManager* manager = obelisk::IOManager::GetSelf();
        // manager->addTimer(seconds * 1000, std::bind(&obelisk::IOManager::schedule, manager, c));
-        manager->addTimer(seconds * 1000, [manager, c](){manager->schedule(c);});
+        manager->addTimer(seconds * 1000, [manager, c](){manager->schedule(c, obelisk::thread_id());});
         obelisk::Coroutine::Yield();
         return 0;
     }
@@ -59,7 +59,7 @@ extern "C"{
         obelisk::Coroutine::ptr c = obelisk::Coroutine::GetSelf();
         obelisk::IOManager* manager = obelisk::IOManager::GetSelf();
         //manager->addTimer(usec / 1000, std::bind(&obelisk::IOManager::schedule, manager, c));
-        manager->addTimer(usec / 1000, [manager, c](){manager->schedule(c);});
+        manager->addTimer(usec / 1000, [manager, c](){manager->schedule(c, obelisk::thread_id());});
         obelisk::Coroutine::Yield();
         return 0;
     }

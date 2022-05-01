@@ -22,7 +22,6 @@ Timer::Timer(uint64_t ms, std::function<void()> callback, bool cycle, TimerManag
 }
 
 bool Timer::cancel(){
-    LOG_DEBUG(g_logger) << "Timer::cancel()";
     WriteLock lock(m_manager->m_rwmutex);
     if(!m_callback) return false;
 
