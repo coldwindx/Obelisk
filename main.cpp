@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string>
 #include "hook.h"
 
 using namespace std;
@@ -43,7 +44,7 @@ void test1(){
 
 void test_hook(){
     LOG_INFO(g_logger) << "test_hook begin";
-    IOManager manager(1);
+    IOManager manager(2);
     manager.schedule([](){
         sleep(2);
         LOG_INFO(g_logger) << "sleep 2s";
@@ -64,11 +65,47 @@ void test_timer(){
             timer->cancel();
     }, true);
 }
+
+void test_socket(){
+    LOG_INFO(g_logger) << "test hook begin";
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(80);
+    inet_pton(AF_INET, "110.242.68.3", &addr.sin_addr.s_addr);
+    LOG_INFO(g_logger) << "start to connect";
+    int rt = connect(sock, (const sockaddr*)&addr, sizeof(addr));
+    LOG_INFO(g_logger) << "connect rt=" << rt << " errno=" << errno;
+    if(rt){
+        return;
+    }
+    const char data[] = "GET / HTTP/1.0\r\n\r\n";
+    rt = send(sock, data, sizeof(data), 0);
+    LOG_INFO(g_logger) << "send rt=" << rt << ", errno=" << errno;
+    if(rt <= 0)
+        return;
+    string buf;
+    buf.resize(4096);
+    rt = recv(sock, &buf[0], buf.size(), 0);
+    LOG_INFO(g_logger) << "recv rt=" << rt << ", errno" << errno;
+    if(rt <= 0)
+        return;
+    buf.resize(rt);
+    LOG_INFO(g_logger) << buf;
+
+}
+
 int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
+    LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> load yaml end >>>>>>>>>>>>>";
     //test1();
     // test_timer();
-    test_hook();
+    //test_hook();
+    IOManager iom;
+    iom.schedule(test_socket);
+    // test_socket();
     return 0;
 }

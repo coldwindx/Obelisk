@@ -15,7 +15,8 @@ SET(SRC_LIST
     src/scheduler.cpp
     coroutine/iomanager.cpp
     src/timer.cpp
-    src/hook.cpp)
+    src/hook.cpp
+    src/fd_manager.cpp)
 SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)
