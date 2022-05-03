@@ -10,7 +10,7 @@ __OBELISK__
 
 using Callback = std::function<void()>; 
 
-class Thread{
+class Thread : public Noncopyable{
 public:
     typedef std::shared_ptr<Thread> ptr;
 

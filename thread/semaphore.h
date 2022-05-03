@@ -2,10 +2,11 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include <system.h>
+#include "system.h"
+#include "noncopyable.h"
 
 __OBELISK__
-class Semaphore{
+class Semaphore : public Noncopyable{
 public:
     Semaphore(uint32_t count = 0){
         if(sem_init(&m_semaphore, 0, count))

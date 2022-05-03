@@ -2,6 +2,7 @@
 
 #include "system.h"
 #include "lock.h"
+#include "noncopyable.h"
 #include <atomic>
 
 __OBELISK__
@@ -19,7 +20,7 @@ typedef ScopedLock<CASMutex> CASLock;
 
 #if _USE_THREAD_
 /* 互斥量 */
-class Mutex{
+class Mutex : public Noncopyable{
 public:
     Mutex(){
         pthread_mutex_init(&m_mutex, nullptr);
@@ -38,7 +39,7 @@ private:
 };
 
 /* 读写互斥量 */
-class RWMutex{
+class RWMutex : public Noncopyable{
 public:
     RWMutex(){
         pthread_rwlock_init(&m_lock, nullptr);
@@ -60,7 +61,7 @@ private:
 };
 
 /* 自旋锁互斥量 */
-class SpinMutex{
+class SpinMutex : public Noncopyable {
 public:
     SpinMutex(){
         pthread_spin_init(&m_mutex, 0);
@@ -79,7 +80,7 @@ private:
 };
 
 /* 原子互斥量 */
-class CASMutex{
+class CASMutex : public Noncopyable {
 public:
     CASMutex(){
         m_mutex.clear();
