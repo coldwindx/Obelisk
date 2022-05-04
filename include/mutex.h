@@ -1,6 +1,6 @@
 #pragma once
 
-#include "system.h"
+#include "system.hpp"
 #include "lock.h"
 #include "noncopyable.h"
 #include <atomic>

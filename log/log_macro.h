@@ -1,7 +1,7 @@
 #pragma once
 
-#include "thread/thread.h"
-#include "coroutine/coroutine.h"
+#include "thread.h"
+#include "coroutine.h"
 
 #define LOG_LEVEL(logger, level) \
 	if(logger->getLevel() <= level) \

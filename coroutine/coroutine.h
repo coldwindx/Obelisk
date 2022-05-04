@@ -3,8 +3,8 @@
 #include <memory>
 #include <functional>
 #include <ucontext.h>
-#include "system.h"
-#include "thread/thread.h"
+#include "system.hpp"
+#include "thread.h"
 
 __OBELISK__
 /* 协程

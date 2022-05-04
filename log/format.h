@@ -3,7 +3,7 @@
 #include <memory>
 #include <iosfwd>
 #include <time.h>
-#include "../system.h"
+#include "system.hpp"
 #include "log_level.h"
 #include "log_event.h"
 

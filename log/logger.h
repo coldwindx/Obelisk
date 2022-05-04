@@ -2,10 +2,10 @@
 
 #include <memory>
 #include <list>
-#include "../system.h"
+#include "system.hpp"
 #include "log_level.h"
 #include "log_appender.h"
-#include "thread/mutex.h"
+#include "mutex.h"
 
 __OBELISK__
 

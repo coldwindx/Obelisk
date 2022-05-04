@@ -4,10 +4,10 @@
 #include <memory>
 #include <functional>
 #include <map>
-#include "system.h"
+#include "system.hpp"
 #include "convert.h"
 #include "log.h"
-#include "thread/mutex.h"
+#include "mutex.h"
 
 
 __OBELISK__

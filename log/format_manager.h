@@ -2,7 +2,7 @@
 
 #include <map>
 #include <functional>
-#include "../system.h"
+#include "system.hpp"
 #include "format.h"
 
 __OBELISK__

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "../system.h"
+#include "system.hpp"
 
 __OBELISK__
 // 日志级别枚举类

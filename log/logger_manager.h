@@ -1,9 +1,9 @@
 #pragma once
 
 #include <map>
-#include "../system.h"
+#include "system.hpp"
 #include "logger.h"
-#include "thread/mutex.h"
+#include "mutex.h"
 
 __OBELISK__
 class LoggerManager {

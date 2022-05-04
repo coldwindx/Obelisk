@@ -1,8 +1,8 @@
 #include <memory>
 #include <vector>
-#include "system.h"
-#include "thread/thread.h"
-#include "coroutine/iomanager.h"
+#include "system.hpp"
+#include "thread.h"
+#include "iomanager.h"
 
 __OBELISK__
 

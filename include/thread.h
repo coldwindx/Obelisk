@@ -3,8 +3,8 @@
 #include <pthread.h>
 #include <memory>
 #include <functional>
-#include "../system.h"
-#include "semaphore.h"
+#include "system.hpp"
+#include "semaphore.hpp"
 
 __OBELISK__
 

@@ -1,9 +1,9 @@
 #include <dlfcn.h>
 #include "log.h"
 #include "hook.h"
-#include "config/config.h"
-#include "coroutine/coroutine.h"
-#include "coroutine/iomanager.h"
+#include "config.h"
+#include "coroutine.h"
+#include "iomanager.h"
 #include "fd_manager.h"
 
 static obelisk::Logger::ptr g_logger = LOG_SYSTEM();

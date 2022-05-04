@@ -4,10 +4,10 @@
 #include <map>
 #include <functional>
 #include <yaml-cpp/yaml.h>
-#include "system.h"
+#include "system.hpp"
 #include "config_var.h"
 #include "log.h"
-#include "thread/mutex.h"
+#include "mutex.h"
 
 __OBELISK__
 

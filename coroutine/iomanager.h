@@ -1,6 +1,6 @@
 #pragma once
 
-#include "system.h"
+#include "system.hpp"
 #include "scheduler.h"
 #include "timer.h"
 

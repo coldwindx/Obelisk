@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../system.h"
+#include "system.hpp"
 #include "log_event.h"
 #include "log_writer.h"
 #include "logger_manager.h"

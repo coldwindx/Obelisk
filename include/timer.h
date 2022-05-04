@@ -2,9 +2,9 @@
 
 #include <vector>
 #include <set>
-#include "system.h"
-#include "thread/mutex.h"
-#include "thread/thread.h"
+#include "system.hpp"
+#include "mutex.h"
+#include "thread.h"
 
 __OBELISK__
 class TimerManager;

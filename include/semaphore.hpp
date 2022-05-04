@@ -2,7 +2,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "system.h"
+#include "system.hpp"
 #include "noncopyable.h"
 
 __OBELISK__

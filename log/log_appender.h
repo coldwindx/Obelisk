@@ -3,11 +3,11 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
-#include "../system.h"
+#include "system.hpp"
 #include "log_level.h"
 #include "log_event.h"
 #include "log_formatter.h"
-#include "thread/mutex.h"
+#include "mutex.h"
 
 __OBELISK__
 /* 日志输出 */

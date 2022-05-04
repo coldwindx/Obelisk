@@ -3,10 +3,10 @@
 #include <memory>
 #include <vector>
 #include <list>
-#include "system.h"
-#include "thread/thread.h"
-#include "thread/mutex.h"
-#include "coroutine/coroutine.h"
+#include "system.hpp"
+#include "thread.h"
+#include "mutex.h"
+#include "coroutine.h"
 
 __OBELISK__
 /* 协程调度器---线程池 */

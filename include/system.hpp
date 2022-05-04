@@ -2,9 +2,9 @@
 
 #include <stdint.h>
 #include <time.h>
-#include <sys/time.h>
-#include <sstream>
 #include <thread>
+#include <sstream>
+#include <sys/time.h>
 
 #define __OBELISK__ namespace obelisk {
 #define __END__ }
