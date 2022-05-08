@@ -19,7 +19,8 @@ SET(SRC_LIST
     src/timer.cpp
     src/hook.cpp
     src/fd_manager.cpp
-    src/address.cpp)
+    src/address.cpp
+    src/socket.cpp)
 SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)

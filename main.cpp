@@ -7,7 +7,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string>
+#include "iomanager.h"
 #include "hook.h"
+#include "address.h"
+#include "socket.h"
 
 using namespace std;
 using namespace obelisk;
@@ -97,15 +100,79 @@ void test_socket(){
 
 }
 
+void test_address(){
+    LOG_INFO(g_logger) << "----------IPV4-----------";
+    std::vector<Address::ptr> addrs;
+    bool v = Address::Lookup(addrs, "www.baidu.com");
+    if(!v){
+        LOG_ERROR(g_logger) << "lookup fail";
+        return ;
+    }
+    for(size_t i = 0; i < addrs.size(); ++i){
+        LOG_INFO(g_logger) << i << " - " << addrs[i]->toString();
+    }
+
+    auto addr = IPAddress::Create("127.0.0.8");
+    if(addr){
+        LOG_ERROR(g_logger) << addr->toString();
+    }
+    LOG_INFO(g_logger) << "----------IPV6-----------";
+    std::multimap<std::string, std::pair<Address::ptr, uint32_t> > results;
+    bool v2 = Address::GetInterfaceAddresses(results);
+    if(!v2){
+        LOG_ERROR(g_logger) << "GetInterfaceAddresses fail";
+        return;
+    }
+    for(auto & i : results){
+        LOG_INFO(g_logger) << i.first << " - " << i.second.first->toString()
+            << " - " << i.second.second;
+    }
+    LOG_INFO(g_logger) << "----------END-----------";
+}
+
+void test_socket2(){
+    IPAddress::ptr addr = Address::LookupAnyIPAddress("www.baidu.com");
+    if(addr)
+        LOG_INFO(g_logger) << "get address: " << addr->toString();
+    else{
+        LOG_ERROR(g_logger) << "get address fail";
+        return;
+    }
+    Socket::ptr sock = Socket::CreateTCP(addr);
+    addr->setPort(80);
+    if(!sock->connect(addr)){
+        LOG_ERROR(g_logger) << "connect " << addr->toString() << " fail";
+        return;
+    }
+    else{
+        LOG_INFO(g_logger) << "connect " << addr->toString() << " connected";
+    }
+    const char buff[] = "GET / HTTP/1.0\r\n\r\n";
+    int rt = sock->send(buff, sizeof(buff));
+    if(rt <= 0){
+        LOG_ERROR(g_logger) << "send fail rt=" << rt;
+        return;
+    }
+    string buffs;
+    buffs.resize(4096);
+    rt = sock->recv(&buffs[0], buffs.size());
+    if(rt <= 0){
+        LOG_ERROR(g_logger) << "recv fail rt=" << rt;
+        return;
+    }
+    buffs.resize(rt);
+    LOG_INFO(g_logger) << buffs;
+}
 int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
     LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> load yaml end >>>>>>>>>>>>>";
-    //test1();
+    // test1();
     // test_timer();
-    //test_hook();
-    IOManager iom;
-    iom.schedule(test_socket);
+    // test_hook();
     // test_socket();
+    // test_address();
+    IOManager iom;
+    iom.schedule(&test_socket2);
     return 0;
 }

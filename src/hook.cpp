@@ -83,7 +83,8 @@ static ssize_t do_io(int fd, Origin fun, const char * hook_fun_name
                         , uint32_t event, int timeout_so, Args&&... args){
         if(!obelisk::is_hook_enable)
             return fun(fd, std::forward<Args>(args)...);
-        obelisk::FdCtx::ptr ctx = obelisk::FdManager::instance()->get(fd);
+        obelisk::FdManager::ptr manager = obelisk::FdManager::instance();
+        obelisk::FdCtx::ptr ctx = manager->get(fd);
         if(!ctx)
             return fun(fd, std::forward<Args>(args)...);
         if(ctx->isClose()){

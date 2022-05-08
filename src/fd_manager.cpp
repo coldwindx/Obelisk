@@ -75,9 +75,11 @@ FdCtx::ptr FdManager::get(int fd, bool auto_create){
         if(false == auto_create)
             return nullptr;
         m_datas.resize(fd * 1.5);
+    }else{
+        if(m_datas[fd] || !auto_create)
+            return m_datas[fd];
     }
-    if(m_datas[fd] || !auto_create)
-        return m_datas[fd];
+
     lock.unlock();
 
     WriteLock lock2(m_mutex);

@@ -251,7 +251,7 @@ void IOManager::idle(){
     while(true){
         uint64_t nextTimeout = 0;
         if(canStop(nextTimeout)){
-            LOG_INFO(g_logger) << "name=" << getName() << " idle stopping exit";
+            // LOG_DEBUG(g_logger) << "name=" << getName() << " idle stopping exit";
             break;
         }
     
