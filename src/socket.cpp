@@ -13,40 +13,8 @@
 __OBELISK__
 static Logger::ptr g_logger = LOG_SYSTEM();
 
-
-Socket::ptr Socket::CreateTCP(Address::ptr address){
-    Socket::ptr sock(new Socket(address->getFamily(), TCP, 0));
-    return sock;
-}
-Socket::ptr Socket::CreateUDP(Address::ptr address){
-    Socket::ptr sock(new Socket(address->getFamily(), UDP, 0));
-    return sock;
-}
-
-Socket::ptr Socket::CreateTCPSocket(){
-    Socket::ptr sock(new Socket(IPv4, TCP, 0));
-    return sock;
-}
-Socket::ptr Socket::CreateUDPSocket(){
-    Socket::ptr sock(new Socket(IPv4, UDP, 0));
-    return sock;
-}
-Socket::ptr Socket::CreateTCPSocket6(){
-    Socket::ptr sock(new Socket(IPv6, TCP, 0));
-    return sock;
-}
-Socket::ptr Socket::CreateUDPSocket6(){
-    Socket::ptr sock(new Socket(IPv6, UDP, 0));
-    return sock;
-}
-
-Socket::ptr Socket::CreateUnixTCPSocket(){
-    Socket::ptr sock(new Socket(Unix, TCP, 0));
-    return sock;
-}
-Socket::ptr Socket::CreateUnixUDPSocket(){
-    Socket::ptr sock(new Socket(Unix, UDP, 0));
-    return sock;
+Socket::ptr Socket::Create(int family, int type){
+    return Socket::ptr(new Socket(family, type, 0));
 }
 
 Socket::Socket(int family, int type, int protocol)

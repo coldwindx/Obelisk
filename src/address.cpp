@@ -26,19 +26,11 @@ static uint32_t CountBytes(T value){
 Address::ptr Address::Create(const sockaddr* addr, socklen_t addrlen){
     if(addr == nullptr)
         return nullptr;
-    Address::ptr result;
-    switch(addr->sa_family){
-        case AF_INET:
-            result.reset(new IPv4Address(*(const sockaddr_in*)addr));
-            break;
-        case AF_INET6:
-            result.reset(new IPv6Address(*(const sockaddr_in6*)addr));
-            break;
-        default:
-            result.reset(new UnknowAddress(*addr));
-            break;
-    }
-    return result;
+    if(AF_INET == addr->sa_family)
+        return Address::ptr(new IPv4Address(*(const sockaddr_in*)addr));
+    if(AF_INET6 == addr->sa_family)
+        return Address::ptr(new IPv6Address(*(const sockaddr_in6*)addr));
+    return Address::ptr(new UnknowAddress(*addr));
 }
 
 bool Address::Lookup(std::vector<Address::ptr>& result, const std::string& host
@@ -132,25 +124,18 @@ bool Address::GetInterfaceAddresses(std::multimap<std::string, std::pair<Address
             if(family != AF_UNSPEC && family != next->ifa_addr->sa_family){
                 continue;
             }
-            switch(next->ifa_addr->sa_family){
-                case AF_INET:
-                    {
-                        addr = Create(next->ifa_addr, sizeof(sockaddr_in));
-                        uint32_t netmask = ((sockaddr_in*)next->ifa_netmask)->sin_addr.s_addr;
-                        prefix_len = CountBytes(netmask);
-                    }
-                    break;
-                case AF_INET6:
-                    {
-                        addr = Create(next->ifa_addr, sizeof(sockaddr_in6));
-                        in6_addr& netmask = ((sockaddr_in6*)next->ifa_netmask)->sin6_addr;
-                        for(int i = 0; i < 16; ++i){
-                            prefix_len +=  CountBytes(netmask.s6_addr[i]);
-                        }
-                    }
-                    break;
-                default: break;
+            if(AF_INET == next->ifa_addr->sa_family){
+                addr = Create(next->ifa_addr, sizeof(sockaddr_in));
+                uint32_t netmask = ((sockaddr_in*)next->ifa_netmask)->sin_addr.s_addr;
+                prefix_len = CountBytes(netmask);
             }
+            if(AF_INET6 == next->ifa_addr->sa_family){
+                addr = Create(next->ifa_addr, sizeof(sockaddr_in6));
+                in6_addr& netmask = ((sockaddr_in6*)next->ifa_netmask)->sin6_addr;
+                for(int i = 0; i < 16; ++i)
+                    prefix_len +=  CountBytes(netmask.s6_addr[i]);
+            }
+
             if(addr){
                 result.insert(std::make_pair(next->ifa_name, std::make_pair(addr, prefix_len)));
             }
@@ -166,12 +151,12 @@ bool Address::GetInterfaceAddresses(std::multimap<std::string, std::pair<Address
 bool Address::GetInterfaceAddresses(std::vector<std::pair<Address::ptr, uint32_t> >& result
                 , const std::string iface, int family){
     if(iface.empty() || iface == "*"){
-        if(family == AF_INET || family == AF_UNSPEC){
+        if(family == AF_INET || family == AF_UNSPEC)
             result.push_back(std::make_pair(Address::ptr(new IPv4Address()), 0u));
-        }
-        if(family == AF_INET6 || family == AF_UNSPEC){
+        
+        if(family == AF_INET6 || family == AF_UNSPEC)
             result.push_back(std::make_pair(Address::ptr(new IPv6Address()), 0u));
-        }
+        
         return true;
     }
     std::multimap<std::string, std::pair<Address::ptr, uint32_t> > results;
@@ -265,7 +250,8 @@ IPAddress::ptr IPAddress::Create(const char* address, uint16_t port){
     }
 
     try{
-        IPAddress::ptr result = std::dynamic_pointer_cast<IPv4Address>(Address::Create(results->ai_addr, (socklen_t)results->ai_addrlen));
+        Address::ptr p = Address::Create(results->ai_addr, (socklen_t)results->ai_addrlen);
+        IPAddress::ptr result = std::dynamic_pointer_cast<IPAddress>(p);
         if(result)
             result->setPort(port);
         freeaddrinfo(results);

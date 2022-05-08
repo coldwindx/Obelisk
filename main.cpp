@@ -138,7 +138,7 @@ void test_socket2(){
         LOG_ERROR(g_logger) << "get address fail";
         return;
     }
-    Socket::ptr sock = Socket::CreateTCP(addr);
+    Socket::ptr sock = Socket::Create(addr->getFamily());
     addr->setPort(80);
     if(!sock->connect(addr)){
         LOG_ERROR(g_logger) << "connect " << addr->toString() << " fail";
