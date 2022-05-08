@@ -167,12 +167,12 @@ int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
     LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> load yaml end >>>>>>>>>>>>>";
+    IOManager iom;
     // test1();
     // test_timer();
     // test_hook();
     // test_socket();
     // test_address();
-    IOManager iom;
-    iom.schedule(&test_socket2);
+    // iom.schedule(&test_socket2);
     return 0;
 }

@@ -1,13 +1,13 @@
-#ifndef __SYLAR_ENDIAN_H__
-#define __SYLAR_ENDIAN_H__
+#pragma once
 
-#define SYLAR_LITTLE_ENDIAN 1
-#define SYLAR_BIG_ENDIAN 2
+// #define SYLAR_LITTLE_ENDIAN 1
+// #define SYLAR_BIG_ENDIAN 2
 
 #include <byteswap.h>
 #include <stdint.h>
+#include "system.hpp"
 
-namespace obelisk {
+__OBELISK__
 
 /**
  * @brief 8字节类型的字节序转化
@@ -36,13 +36,13 @@ byteswap(T value) {
     return (T)bswap_16((uint16_t)value);
 }
 
+// #if BYTE_ORDER == BIG_ENDIAN
+// #define SYLAR_BYTE_ORDER SYLAR_BIG_ENDIAN
+// #else
+// #define SYLAR_BYTE_ORDER SYLAR_LITTLE_ENDIAN
+// #endif
+
 #if BYTE_ORDER == BIG_ENDIAN
-#define SYLAR_BYTE_ORDER SYLAR_BIG_ENDIAN
-#else
-#define SYLAR_BYTE_ORDER SYLAR_LITTLE_ENDIAN
-#endif
-
-#if SYLAR_BYTE_ORDER == SYLAR_BIG_ENDIAN
 
 /**
  * @brief 只在小端机器上执行byteswap, 在大端机器上什么都不做
@@ -78,6 +78,4 @@ T byteswapOnBigEndian(T t) {
 }
 #endif
 
-}
-
-#endif
+__END__

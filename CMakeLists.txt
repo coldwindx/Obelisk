@@ -20,7 +20,8 @@ SET(SRC_LIST
     src/hook.cpp
     src/fd_manager.cpp
     src/address.cpp
-    src/socket.cpp)
+    src/socket.cpp
+    src/bytearray.cpp)
 SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)
