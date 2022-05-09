@@ -2,6 +2,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include "system.hpp"
 
 __OBELISK__
@@ -88,10 +91,19 @@ public:
     size_t getReadSize() const { return m_size - m_position; }
 
     bool isLittleEndian() const;
-    bool setIsLittleEndian(bool val);
+    void setIsLittleEndian(bool val);
 
     std::string toString() const;
     std::string toHexString();
+
+    int64_t getReadBuffers(std::vector<iovec>& buffers, uint64_t len = ~0u) const;
+    int64_t getReadBuffers(std::vector<iovec>& buffers, uint64_t len, uint64_t position) const;
+    /**
+     *@brief 增加容量，不改变position 
+     */
+    int64_t getWriteBuffers(std::vector<iovec>& bufers, uint64_t len);
+
+    size_t getSize() const { return m_size; }
 private:
     void addCapacity(size_t size);
     size_t getCapacoty() const { return m_capacity - m_position; }

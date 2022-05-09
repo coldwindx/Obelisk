@@ -1,6 +1,7 @@
 #include <string.h>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include "log.h"
 #include "endian.hpp"
 #include "bytearray.h"
@@ -298,14 +299,14 @@ void ByteArray::write(const void* buf, size_t size){
 
     while(0 < size){
         if(size <= ncap){
-            memcpy(m_current->data + npos, buf + bpos, size);
+            memcpy(m_current->data + npos, (const char*)buf + bpos, size);
             if(m_current->size == npos + size)
                 m_current = m_current->next;
             m_position += size;
             bpos += size;
             size = 0;
         }else{
-            memcpy(m_current->data + npos, buf + bpos, ncap);
+            memcpy(m_current->data + npos, (const char*)buf + bpos, ncap);
             m_position += ncap;
             bpos += ncap;
             size -= ncap;
@@ -328,14 +329,14 @@ void ByteArray::read(void* buf, size_t size){
 
     while(0 < size){
         if(size <= ncap){
-            memcpy(buf + bpos, m_current->data + npos, size);
+            memcpy((char*)buf + bpos, m_current->data + npos, size);
             if(m_current->size == npos + size)
                 m_current = m_current->next;
             m_position += size;
             bpos += size;
             size = 0;
         }else{
-            memcpy(buf + bpos, m_current->data + npos, ncap);
+            memcpy((char*)buf + bpos, m_current->data + npos, ncap);
             m_position += ncap;
             bpos += ncap;
             size -= ncap;
@@ -357,14 +358,14 @@ void ByteArray::read(void* buf, size_t size, size_t position) const{
 
     while(0 < size){
         if(size <= ncap){
-            memcpy(buf + bpos, cur->data + npos, size);
+            memcpy((char*)buf + bpos, cur->data + npos, size);
             if(cur->size == npos + size)
                 cur = cur->next;
             position += size;
             bpos += size;
             size = 0;
         }else{
-            memcpy(buf + bpos, cur->data + npos, ncap);
+            memcpy((char*)buf + bpos, cur->data + npos, ncap);
             position += ncap;
             bpos += ncap;
             size -= ncap;
@@ -431,8 +432,90 @@ bool ByteArray::readFromFile(const std::string& name){
 bool ByteArray::isLittleEndian() const{
     return LITTLE_ENDIAN == m_endian;
 }
-bool ByteArray::setIsLittleEndian(bool val){
+void ByteArray::setIsLittleEndian(bool val){
     m_endian = val ? LITTLE_ENDIAN : BIG_ENDIAN;
+}
+
+int64_t ByteArray::getReadBuffers(std::vector<iovec>& buffers, uint64_t len) const{
+    len = getReadSize() < len ? getReadSize() : len;
+    if(0 == len) return 0;
+
+    uint64_t size = len;
+    size_t npos = m_position % m_basesize;
+    size_t ncap = m_current->size - npos;
+    struct iovec iov;
+    Node *cur = m_current;
+
+    while(0 < len){
+        if(len <= ncap){
+            iov.iov_base = cur->data + npos;
+            iov.iov_len = len;
+            len = 0;
+        }else{
+            iov.iov_base = cur->data + npos;
+            iov.iov_len = ncap;
+            len -= ncap;
+            cur = cur->next;
+            ncap = cur->size;
+            npos = 0;
+        }
+        buffers.push_back(iov);
+    }
+    return size;
+}
+int64_t ByteArray::getReadBuffers(std::vector<iovec>& buffers, uint64_t len, uint64_t position) const{
+    len = getReadSize() < len ? getReadSize() : len;
+    if(0 == len) return 0;
+
+    uint64_t size = len;
+    size_t npos = position % m_basesize;
+    size_t count = position / m_basesize;
+    Node *cur = m_root;
+    while(0 < count--) cur = cur->next;
+    size_t ncap = cur->size - npos;
+    struct iovec iov;
+
+    while(0 < len){
+        if(len <= ncap){
+            iov.iov_base = cur->data + npos;
+            iov.iov_len = len;
+            len = 0;
+        }else{
+            iov.iov_base = cur->data + npos;
+            iov.iov_len = ncap;
+            len -= ncap;
+            cur = cur->next;
+            ncap = cur->size;
+            npos = 0;
+        }
+        buffers.push_back(iov);
+    }
+    return size;
+}
+int64_t ByteArray::getWriteBuffers(std::vector<iovec>& buffers, uint64_t len){
+    if(0 == len) return 0;
+    addCapacity(len);
+    uint64_t size = len;
+    size_t npos = m_position % m_basesize;
+    size_t ncap = m_current->size - npos;
+    struct iovec iov;
+    Node *cur = m_current;
+    while(0 < len){
+        if(len <= ncap){
+            iov.iov_base = cur->data + npos;
+            iov.iov_len = len;
+            len = 0;
+        }else{
+            iov.iov_base = cur->data + npos;
+            iov.iov_len = ncap;
+            len -= ncap;
+            cur = cur->next;
+            ncap = cur->size;
+            npos = 0;
+        }
+        buffers.push_back(iov);
+    }
+    return size;
 }
 
 void ByteArray::addCapacity(size_t size){
@@ -473,6 +556,6 @@ std::string ByteArray::toHexString(){
         ss << std::setw(2) << std::setfill('0') << std::hex
             << (int)(uint8_t)str[i] << " ";
     }
-    return ss.c_str();
+    return ss.str();
 }
 __END__
