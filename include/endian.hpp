@@ -36,6 +36,14 @@ byteswap(T value) {
     return (T)bswap_16((uint16_t)value);
 }
 
+/**
+ * @brief 1字节类型的字节序转化
+ */
+template<class T>
+typename std::enable_if<sizeof(T) == sizeof(uint8_t), T>::type
+byteswap(T value) {
+    return value;
+}
 // #if BYTE_ORDER == BIG_ENDIAN
 // #define SYLAR_BYTE_ORDER SYLAR_BIG_ENDIAN
 // #else

@@ -13,9 +13,12 @@
 #include "address.h"
 #include "socket.h"
 #include "bytearray.h"
+#include "http/http.h"
+#include "http/http_parser.h"
 
 using namespace std;
 using namespace obelisk;
+using namespace obelisk::http;
 Logger::ptr g_logger = LOG_SYSTEM();
 
 void test_coroutine(){
@@ -244,6 +247,65 @@ void test_bytearray(){
 #undef XX
 
 }
+
+void test_http(){
+    LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> test http request >>>>>>>>>>>>>";
+    HttpRequest::ptr req(new HttpRequest);
+    req->setHeader("host", "www.sylar.top");
+    req->setBody("hello, sylar");
+    req->dump(std::cout) << std::endl;
+    LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> test http response >>>>>>>>>>>>>";
+    HttpResponse::ptr rsp(new HttpResponse);
+    rsp->setHeader("X-X", "Sylar");
+    rsp->setBody("hello, sylar");
+    rsp->dump(std::cout) << std::endl;
+}
+char request_data[] = "POST / HTTP/1.1\r\n"
+    "Host: www.sylar.top\r\n"
+    "Content-Length: 10\r\n\r\n"
+    "1234567890";
+const char response_data[] = "HTTP/1.1 200 OK\r\n"
+        "Date: Tue, 04 Jun 2019 15:43:56 GMT\r\n"
+        "Server: Apache\r\n"
+        "Last-Modified: Tue, 12 Jan 2010 13:48:00 GMT\r\n"
+        "ETag: \"51-47cf7e6ee8400\"\r\n"
+        "Accept-Ranges: bytes\r\n"
+        "Content-Length: 81\r\n"
+        "Cache-Control: max-age=86400\r\n"
+        "Expires: Wed, 05 Jun 2019 15:43:56 GMT\r\n"
+        "Connection: Close\r\n"
+        "Content-Type: text/html\r\n\r\n"
+        "<html>\r\n"
+        "<meta http-equiv=\"refresh\" content=\"0;url=http://www.baidu.com/\">\r\n"
+        "</html>\r\n";
+void test_http_parser(){
+    LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> test http request parser >>>>>>>>>>>>>";
+    {
+        HttpRequestParser parser;
+        string tmp = request_data;
+        size_t s = parser.execute(request_data, tmp.size()); 
+        LOG_INFO(g_logger) << "execute rt=" << s << " has_error=" << parser.hasError()
+            << " is_finished=" << parser.isFinished()
+            << " total=" << tmp.size()
+            << " content_length=" << parser.getContentLength();
+        tmp.resize(tmp.size() - s);
+        LOG_INFO(g_logger) << parser.getData()->toString();
+    }
+    LOG_INFO(g_logger) << ">>>>>>>>>>>>>>>>>> test http response parser >>>>>>>>>>>>>";
+    {
+        HttpResponseParser parser;
+        string tmp = response_data;
+        size_t s = parser.execute(&tmp[0], tmp.size()); 
+        LOG_INFO(g_logger) << "execute rt=" << s << " has_error=" << parser.hasError()
+            << " is_finished=" << parser.isFinished()
+            << " total=" << tmp.size()
+            << " content_length=" << parser.getContentLength();
+        tmp.resize(tmp.size() - s);
+        LOG_INFO(g_logger) << parser.getData()->toString();
+        LOG_INFO(g_logger) << tmp;
+    }
+
+}
 int main(){
     YAML::Node root = YAML::LoadFile("/home/workspace/Obelisk/bin/conf/logs.yaml");
     Config::loadFromYaml(root);
@@ -255,6 +317,8 @@ int main(){
     // test_socket();
     // test_address();
     // iom.schedule(&test_socket2);
-    test_bytearray();
+    // test_bytearray();
+    // test_http();
+    test_http_parser();
     return 0;
 }

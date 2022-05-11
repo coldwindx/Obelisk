@@ -21,7 +21,11 @@ SET(SRC_LIST
     src/fd_manager.cpp
     src/address.cpp
     src/socket.cpp
-    src/bytearray.cpp)
+    src/bytearray.cpp
+    src/http/http.cpp
+    src/http/http11_parser.cc
+    src/http/httpclient_parser.cc
+    src/http/http_parser.cpp)
 SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)

@@ -7,6 +7,7 @@
 #include <sys/time.h>
 
 #define __OBELISK__ namespace obelisk {
+#define __HTTP__ namespace http {
 #define __END__ }
 
 #define _USE_THREAD_ 1		// 启用线程安全

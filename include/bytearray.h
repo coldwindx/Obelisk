@@ -29,6 +29,16 @@ public:
     ByteArray(size_t basesize = 4096);
     ~ByteArray();
 
+    /**
+     * @brief int类型无压缩的写入方法
+     */
+    template<typename INT>
+    void write(INT v){
+        if(BYTE_ORDER != m_endian)
+            v = byteswap(v);
+        write(&v, sizeof(v));
+    }
+    
     void writeFint8(int8_t v);
     void writeFuint8( uint8_t v);
     void writeFint16( int16_t v);
