@@ -7,6 +7,7 @@
 #include "log.h"
 #include "coroutine_macro.h"
 #include "iomanager.h"
+#include "macro.h"
 
 __OBELISK__
 
@@ -26,8 +27,8 @@ void IOManager::FdContext::resetContext(IOManager::FdContext::EventContext& ctx)
     ctx.callback = nullptr;
 }
 void IOManager::FdContext::triggerEvent(IOManager::Event event){
-    OBELISK_ASSERT(this->event & event);
-    this->event = (Event)(this->event & ~event);
+    OBELISK_ASSERT(this->events & event);
+    this->events = (Event)(this->events & ~event);
     EventContext& ctx = getContext(event);
 
     Scheduler* scheduler = Scheduler::GetSelf();
@@ -88,15 +89,15 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> callback){
     }
 
     Lock lock2(fdCtx->mutex);
-    if(fdCtx->event & event){
+    if(fdCtx->events & event){
         LOG_ERROR(g_logger) << "addEvent assert fd=" << fd  
-                << " ,event=" << event << " ,fd_ctx.event=" << fdCtx->event;
-        OBELISK_ASSERT(!(fdCtx->event & event));
+                << " ,event=" << event << " ,fd_ctx.event=" << fdCtx->events;
+        OBELISK_ASSERT(!(fdCtx->events & event));
     }
 
-    int op = fdCtx->event ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
+    int op = fdCtx->events ? EPOLL_CTL_MOD : EPOLL_CTL_ADD;
     epoll_event epevent;
-    epevent.events = EPOLLET | fdCtx->event | event;
+    epevent.events = EPOLLET | fdCtx->events | event;
     epevent.data.ptr = fdCtx;
 
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
@@ -108,9 +109,9 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> callback){
     }
 
     ++m_pendingEventCount;
-    fdCtx->event = (Event)(fdCtx->event | event);
+    fdCtx->events = (Event)(fdCtx->events | event);
     FdContext::EventContext& eventCtx = fdCtx->getContext(event);
-    OBELISK_ASSERT(!(eventCtx.scheduler || eventCtx.coroutine || eventCtx.callback));
+   //TODO[BUG] OBELISK_ASSERT(!(eventCtx.scheduler || eventCtx.coroutine || eventCtx.callback));
 
     eventCtx.scheduler = Scheduler::GetSelf();
     if(callback){
@@ -123,6 +124,7 @@ int IOManager::addEvent(int fd, Event event, std::function<void()> callback){
     return 0;
 }
 
+
 bool IOManager::delEvent(int fd, Event event){
     ReadLock lock(m_rwMutex);
     if(m_fdContexts.size() <= fd)
@@ -131,10 +133,10 @@ bool IOManager::delEvent(int fd, Event event){
     lock.unlock();
 
     Lock lock2(fdCtx->mutex);
-    if(!(fdCtx->event & event))
+    if(!(fdCtx->events & event))
         return false;
 
-    Event newEvents = (Event)(fdCtx->event & ~event);
+    Event newEvents = (Event)(fdCtx->events & ~event);
     int op = newEvents ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
     epoll_event epevent;
     epevent.events = EPOLLET | newEvents;
@@ -149,7 +151,7 @@ bool IOManager::delEvent(int fd, Event event){
     }
 
     --m_pendingEventCount;
-    fdCtx->event = newEvents;
+    fdCtx->events = newEvents;
     FdContext::EventContext& eventCtx = fdCtx->getContext(event);
     fdCtx->resetContext(eventCtx);
 
@@ -164,10 +166,10 @@ bool IOManager::cancelEvent(int fd, Event event){
     lock.unlock();
 
     Lock lock2(fdCtx->mutex);
-    if(!(fdCtx->event & event))
+    if(!(fdCtx->events & event))
         return false;
 
-    Event newEvents = (Event)(fdCtx->event & ~event);
+    Event newEvents = (Event)(fdCtx->events & ~event);
     int op = newEvents ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
     epoll_event epevent;
     epevent.events = EPOLLET | newEvents;
@@ -194,7 +196,7 @@ bool IOManager::cancelAll(int fd){
     lock.unlock();
 
     Lock lock2(fdCtx->mutex);
-    if(!fdCtx->event) return false;
+    if(!fdCtx->events) return false;
 
     epoll_event epevent;
     epevent.events = 0;
@@ -208,17 +210,17 @@ bool IOManager::cancelAll(int fd){
         return false;
     }
 
-    if(fdCtx->event & READ){
+    if(fdCtx->events & READ){
         fdCtx->triggerEvent(READ);
         --m_pendingEventCount;
     }
 
-    if(fdCtx->event & WRITE){
+    if(fdCtx->events & WRITE){
         fdCtx->triggerEvent(WRITE);
         --m_pendingEventCount;
     }
 
-    OBELISK_ASSERT(fdCtx->event == 0);
+    OBELISK_ASSERT(fdCtx->events == 0);
     return true;
 }
 
@@ -276,13 +278,13 @@ void IOManager::idle(){
             epoll_event& event = events[i];
             if(event.data.fd == m_tickleFds[0]){
                 uint8_t dummy;
-                while(1 == read(m_tickleFds[0], &dummy, 1)){}
+                while(0 < read(m_tickleFds[0], &dummy, 1)){}
                 continue;
             }
             FdContext* fdCtx = (FdContext*)event.data.ptr;
             Lock lock(fdCtx->mutex);
             if(event.events & (EPOLLERR | EPOLLHUP)){
-                event.events |= EPOLLOUT | EPOLLIN;
+                event.events |= (EPOLLOUT | EPOLLIN) & fdCtx->events;
             }
             int realEvent = NONE;
             if(event.events & EPOLLIN){
@@ -292,10 +294,10 @@ void IOManager::idle(){
                 realEvent |= WRITE;
             }
 
-            if(fdCtx->event & realEvent == NONE){
+            if((fdCtx->events & realEvent) == NONE){
                 continue;
             }
-            int leftEvents = (fdCtx->event & ~realEvent);
+            int leftEvents = (fdCtx->events & ~realEvent);
             int op = leftEvents ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
 
             event.events = EPOLLET | leftEvents;

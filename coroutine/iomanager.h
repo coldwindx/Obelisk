@@ -26,7 +26,7 @@ private:
         int fd = 0;             // 事件句柄
         EventContext read;      // 读事件
         EventContext write;     // 写事件
-        Event event = NONE;     // 注册事件
+        Event events = NONE;    // 注册事件
         Mutex mutex;            
     };
 public:

@@ -91,7 +91,7 @@ static ssize_t do_io(int fd, Origin fun, const char * hook_fun_name
             errno = EBADF;
             return -1;
         }
-        if(!ctx->isSocket() || ctx->getuserNonblock())
+        if(!ctx->isSocket() || ctx->getUserNonblock())
             return fun(fd, std::forward<Args>(args)...);
         uint64_t to = ctx->getTimeout(timeout_so);
         std::shared_ptr<timer_info> tinfo(new timer_info());
@@ -198,7 +198,7 @@ extern "C"{
 
         if(!ctx->isSocket())
             return connect_f(fd, addr, addrlen);
-        if(ctx->getuserNonblock())
+        if(ctx->getUserNonblock())
             return connect_f(fd, addr, addrlen);
 
         int n = connect_f(fd, addr, addrlen);
@@ -342,7 +342,7 @@ extern "C"{
                     obelisk::FdCtx::ptr ctx = obelisk::FdManager::instance()->get(fd);
                     if(!ctx || ctx->isClose() || ctx->isSocket())
                         return arg;
-                    if(ctx->getuserNonblock())
+                    if(ctx->getUserNonblock())
                         return arg | O_NONBLOCK;
                     else    
                         return arg & ~O_NONBLOCK;

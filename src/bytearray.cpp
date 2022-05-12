@@ -377,9 +377,11 @@ void ByteArray::read(void* buf, size_t size, size_t position) const{
 }
 
 void ByteArray::setPosition(size_t v){
-    if(m_size < v)
+    if(m_capacity < v)
         throw std::out_of_range("set_position out of range");
     m_position = v;
+    if(m_size < m_position)
+        m_size = m_position;
     m_current = m_root;
     while(m_current->size <= v){
         v -= m_current->size;

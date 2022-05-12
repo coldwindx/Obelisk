@@ -20,7 +20,7 @@ public:
     bool close();
 
     void setUserNonblock(bool v) { m_userNonblock = v; }
-    bool getuserNonblock() const { return m_userNonblock; }
+    bool getUserNonblock() const { return m_userNonblock; }
 
     void setSysNonblock(bool v) { m_sysNonblock = v; }
     bool getSysNonblock() const { return m_sysNonblock; }

@@ -7,7 +7,7 @@ INCLUDE_DIRECTORIES(./coroutine)
 INCLUDE_DIRECTORIES(/usr/include)
 
 SET(SRC_LIST    
-    main.cpp 
+    sample/main.cpp 
     log/log_formatter.cpp 
     log/logger.cpp 
     log/log_initer.cpp
@@ -25,7 +25,8 @@ SET(SRC_LIST
     src/http/http.cpp
     src/http/http11_parser.cc
     src/http/httpclient_parser.cc
-    src/http/http_parser.cpp)
+    src/http/http_parser.cpp
+    src/http/tcp_server.cpp)
 SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)

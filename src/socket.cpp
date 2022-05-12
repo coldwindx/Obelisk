@@ -69,18 +69,18 @@ bool Socket::setOption(int level, int option, const void* result, size_t len){
 
 Socket::ptr Socket::accept(){
     Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
-    int network = ::accept(m_sock, nullptr, nullptr);
-    if(-1 == network){
+    int newsock = ::accept(m_sock, nullptr, nullptr);
+    if(-1 == newsock){
         LOG_ERROR(g_logger) << "accept(" << m_sock << ") errno="
             << errno << "errstr=" << strerror(errno);
         return nullptr;
     }
-    if(sock->init(network))
+    if(sock->init(newsock))
         return sock;
     return nullptr;
 }
 bool Socket::init(int sock){
-    FdCtx::ptr ctx = FdManager::instance()->get(m_sock);
+    FdCtx::ptr ctx = FdManager::instance()->get(sock);
     if(ctx && ctx->isSocket() && !ctx->isClose()){
         m_sock = sock;
         m_connected = true;
@@ -346,6 +346,10 @@ void Socket::newSocket(){
             << m_type << ", " << m_protocol << ") errno=" << errno
             << " errstr=" << strerror(errno);
     }
+}
+
+std::ostream& operator<<(std::ostream& os, const Socket& sock){
+    return sock.dump(os);
 }
 
 __END__
