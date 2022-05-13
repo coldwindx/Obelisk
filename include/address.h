@@ -2,6 +2,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <map>
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/types.h>
