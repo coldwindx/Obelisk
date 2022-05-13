@@ -27,6 +27,7 @@ SET(SRC_LIST
     src/http/httpclient_parser.cc
     src/http/http_parser.cpp
     src/http/tcp_server.cpp
+    src/http/http_session.cpp
     src/stream.cpp
     src/streams/socket_stream.cpp)
 SET(LIBS pthread yaml-cpp dl)
