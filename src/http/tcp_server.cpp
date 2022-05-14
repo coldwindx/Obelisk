@@ -37,6 +37,7 @@ bool TcpServer::bind(Address::ptr addr){
         return false;
     }
     m_socks.push_back(sock);
+    LOG_INFO(g_logger) << "server bind success: " << *sock;
     return true;
 }
 bool TcpServer::bind(const std::vector<Address::ptr>& addrs, std::vector<Address::ptr>& fails){

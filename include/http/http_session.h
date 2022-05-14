@@ -1,3 +1,5 @@
+#pragma once
+
 #include "http/http.h"
 #include "streams/socket_stream.h"
 

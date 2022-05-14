@@ -160,11 +160,11 @@ std::ostream& HttpResponse::dump(std::ostream& os) const{
     os << "HTTP/" << ((uint32_t)(m_version >> 4)) << "." << ((uint32_t)(m_version & 0x0f))
         << " " << (uint32_t)m_status << " " 
         << (m_reason.empty() ? HttpStatusToString(m_status) : m_reason)
-        << "\r\n\r\n";
+        << "\r\n";
     for(auto & i : m_headers){
         if(0 == strcasecmp(i.first.c_str(), "connection"))
             continue;
-        os << i.first << ": " << i.second << "\r\n\r\n";
+        os << i.first << ": " << i.second << "\r\n";
     }
     os << "connection: " << (m_close ? "close" : "keep-alive") << "\r\n";
     if(!m_body.empty()) 
