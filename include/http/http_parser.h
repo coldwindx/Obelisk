@@ -24,6 +24,7 @@ public:
 
     HttpRequest::ptr getData() const { return m_data; }
     void setError(int error) { m_error = error; }
+    const http_parser& getParser() const { return m_parser; }
 
     uint64_t getContentLength();
 public:
@@ -44,14 +45,19 @@ public:
 
     HttpResponseParser();
 
-    size_t execute(char* data, size_t len);
+    size_t execute(char* data, size_t len, bool chunck);
     int isFinished();
     int hasError();
 
     HttpResponse::ptr getData() const { return m_data; }
     void setError(int error) { m_error = error; }
+    const httpclient_parser& getParser() const { return m_parser; }
 
     uint64_t getContentLength();
+
+public:
+    static uint64_t GetHttpResponseBufferSize();
+    static uint64_t GetHttpResponseMaxBodySize();
 private:
     httpclient_parser m_parser;
     HttpResponse::ptr m_data;

@@ -17,28 +17,43 @@ HttpRequest::ptr HttpSession::recvRequest(){
     int offset = 0;
     do{
         int len = read(data + offset, buff_size - offset);
-        if(len <= 0) return nullptr;
+        if(len <= 0) {
+            close();
+            return nullptr;
+        }
         len += offset;
         size_t nparse = parser->execute(data, len + offset);
-        if(parser->hasError()) return nullptr;
+        if(parser->hasError()) {
+            close();
+            return nullptr;
+        }
         offset = len - nparse;
-        if(offset == buff_size) return nullptr;
+        if(offset == buff_size) {
+            close();
+            return nullptr;
+        }
         if(parser->isFinished()) break;
     } while(true);
 
     int64_t length = parser->getContentLength();
     if(0 < length){
         std::string body;
-        body.reserve(length);
-        if(offset <= length)
-            body.append(data, offset);
-        else
-            body.append(data, length);
+        body.resize(length);
+        int len = 0;
+        if(offset <= length){
+            memcpy(&body[0], data, offset);
+            len = offset;
+        }else{
+            memcpy(&body[0], data, length);
+            len = length;
+        }
         length -= offset;
 
         if(0 < length){
-            if(readFixSize(&body[body.size()], length) <= 0)
+            if(readFixSize(&body[body.size()], length) <= 0){
+                close();
                 return nullptr;
+            }
         }
         parser->getData()->setBody(body);
     }
