@@ -31,6 +31,7 @@ SET(SRC_LIST
     src/http/http_connection.cpp
     src/http/http_server.cpp
     src/http/servlet.cpp
+    src/http/uri.cc
     src/stream.cpp
     src/streams/socket_stream.cpp)
 SET(LIBS pthread yaml-cpp dl)
