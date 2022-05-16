@@ -10,6 +10,8 @@
 __OBELISK__
 __HTTP__
 
+class HttpConnectionPool;
+
 struct HttpResult{
     typedef std::shared_ptr<HttpResult> ptr;
     enum class Error{
@@ -28,14 +30,18 @@ struct HttpResult{
     HttpResult(int res, HttpResponse::ptr rsp, const std::string& err)
             : result(res), error(err), response(rsp) {}
 
+    std::string toString() const;
+
     int result;
     std::string error;
     HttpResponse::ptr response;
 };
+
 /**
  * @brief 客户端通过accept服务器端response回复而产生的socket
  */
 class HttpConnection : public SocketStream{
+    friend class HttpConnectionPool;
 public:
     typedef std::shared_ptr<HttpConnection> ptr;
     HttpConnection(Socket::ptr sock, bool owner = true);
@@ -56,6 +62,9 @@ public:
     static HttpResult::ptr DoRequest(HttpRequest::ptr req
                                         , Uri::ptr uri
                                         , uint64_t timeout);
+private:
+    uint64_t m_createTime;
+    uint64_t m_requestSize = 0;
 };
 
 class HttpConnectionPool{

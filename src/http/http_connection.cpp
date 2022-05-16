@@ -1,8 +1,22 @@
+#include <vector>
+#include <sstream>
+#include "log.h"
 #include "http/http_parser.h"
 #include "http/http_connection.h"
 
 __OBELISK__
 __HTTP__
+
+static Logger::ptr g_logger = LOG_SYSTEM();
+
+std::string HttpResult::toString() const{
+    std::stringstream ss;
+    ss << "[HttpResult result=" << result
+        << " error=" << error
+        << " response=" << (response ? response->toString() : "nullptr")
+        << "]";
+    return ss.str(); 
+}
 
 HttpConnection::HttpConnection(Socket::ptr sock, bool owner)
         : SocketStream(sock, owner) {
@@ -206,15 +220,44 @@ HttpConnectionPool::HttpConnectionPool(const std::string& host
 
 HttpConnection::ptr HttpConnectionPool::getConnection(){
     uint64_t now = GetCurrentMS();
+    std::vector<HttpConnection*> invalid_conns;
+    HttpConnection* ptr = nullptr;
     Lock lock(m_mutex);
     while(!m_conns.empty()){
         auto conn = *m_conns.begin();
-        if(!conn->isConnected()){
-            m_conns.pop_front();
+        m_conns.pop_front();
+        if(!conn->isConnected() 
+                    || now < conn->m_createTime + m_maxAliveTime){
+            invalid_conns.push_back(conn);
             continue;
         }
-        
+        ptr = conn;
+        break;
     }
+    lock.unlock();
+    for(auto & i : invalid_conns) delete i;
+    m_total -= invalid_conns.size();
+    if(!ptr){
+        IPAddress::ptr addr = Address::LookupAnyIPAddress(m_host);
+        if(!addr){
+            LOG_ERROR(g_logger) << "get addr fail: " << m_host;
+            return nullptr;
+        }
+        addr->setPort(m_port);
+        Socket::ptr sock = Socket::Create(addr->getFamily(), Socket::TCP);
+        if(!sock){
+            LOG_ERROR(g_logger) << "create sock fail: " << *addr;
+            return nullptr;
+        }
+        if(!sock->connect(addr)){
+            LOG_ERROR(g_logger) << "sock connect fail: " << *addr;
+            return nullptr;
+        }
+        ptr = new HttpConnection(sock);
+        ++m_total;
+    }
+    return HttpConnection::ptr(ptr, std::bind(&HttpConnectionPool::ReleaseConnection
+                                                    , std::placeholders::_1, this));
 }
 
 HttpResult::ptr HttpConnectionPool::doRequest(HttpMethod method
@@ -225,6 +268,7 @@ HttpResult::ptr HttpConnectionPool::doRequest(HttpMethod method
     HttpRequest::ptr req = std::make_shared<HttpRequest>();
     req->setPath(url);
     req->setMethod(method);
+    req->setClose(false);
     bool has_host = false;
     for(auto & i : headers){
         if(0 == strcasecmp(i.first.c_str(), "connection")){
@@ -272,7 +316,7 @@ HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr req
     int rt = conn->sendRequest(req);
     if(0 == rt)
         return std::make_shared<HttpResult>((int)HttpResult::Error::SEND_CLOSE_BY_PEER
-                        , nullptr, "send request close by peer: " + addr->toString()); 
+                        , nullptr, "send request close by peer: " + sock->getRemoteAddress()->toString()); 
     if(rt < 0)
         return std::make_shared<HttpResult>((int)HttpResult::Error::SEND_SOCKET_ERROR
                         , nullptr, "send request socket error errno: " + std::to_string(errno)
@@ -280,14 +324,24 @@ HttpResult::ptr HttpConnectionPool::doRequest(HttpRequest::ptr req
     auto rsp = conn->recvResponse();
     if(!rsp)
         return std::make_shared<HttpResult>((int)HttpResult::Error::TIMEOUT
-                        , nullptr, "recv response timeout: " + addr->toString()
+                        , nullptr, "recv response timeout: " + sock->getRemoteAddress()->toString()
                          + " timeout=" + std::to_string(timeout)); 
 
     return std::make_shared<HttpResult>((int)HttpResult::Error::OK, rsp, "success"); 
 }
 
 void HttpConnectionPool::ReleaseConnection(HttpConnection* ptr, HttpConnectionPool* pool){
-
+    ++ptr->m_requestSize;
+    if(!ptr->isConnected() 
+            || GetCurrentMS() <= ptr->m_createTime + pool->m_maxAliveTime
+            || pool->m_maxRequestSize < ptr->m_requestSize){
+        delete ptr;
+        --pool->m_total;
+        return;
+    }
+    
+    Lock lock(pool->m_mutex);
+    pool->m_conns.push_back(ptr);
 }
 
 __END__
