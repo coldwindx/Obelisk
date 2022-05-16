@@ -11,17 +11,18 @@ SET(SRC_LIST
     log/log_formatter.cpp 
     log/logger.cpp 
     log/log_initer.cpp
-    config/config.cpp
+    src/config.cpp
     src/thread.cpp
-    coroutine/coroutine.cpp
+    src/coroutine.cpp
     src/scheduler.cpp
-    coroutine/iomanager.cpp
+    src/iomanager.cpp
     src/timer.cpp
     src/hook.cpp
     src/fd_manager.cpp
     src/address.cpp
     src/socket.cpp
     src/bytearray.cpp
+    src/daemon.cpp
     src/http/http.cpp
     src/http/http11_parser.cc
     src/http/httpclient_parser.cc

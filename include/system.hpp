@@ -31,4 +31,12 @@ static uint64_t GetCurrentUS(){
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * 1000 * 1000ul + tv.tv_usec;
 }
+
+static std::string Time2Str(time_t ts, const char* format = "%Y-%m-%d %H:%M:%S"){
+	struct tm tm;
+	localtime_r(&time, &tm);
+	char buf[64];
+	strftime(buf, sizeof(buf), format.c_str(), &tm);
+	return buf;
+}
 __END__
