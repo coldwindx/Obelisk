@@ -65,7 +65,7 @@ void Scheduler::run(){
     std::list<Coroutine*> pool;                          // 空闲协程池
     Coroutine::ptr idleC(new Coroutine(std::bind(&Scheduler::idle, this)));
     
-    static auto fetch = [&](Callback cb){
+    auto fetch = [&](Callback cb){
         if(pool.empty()){
             Coroutine* c = new Coroutine(cb);
             return Coroutine::ptr(c, [&](Coroutine* p){ pool.push_back(p); });
