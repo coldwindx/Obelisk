@@ -1,0 +1,9 @@
+http_servers:
+    - address: ["0.0.0.0:8080"]
+      keepalive: 1
+      timeout: 1000
+      name: obelisk/1.0.0
+    - address: ["0.0.0.0:8070"]
+      keepalive: 1
+      timeout: 1000
+      name: obelisk/2.0.0

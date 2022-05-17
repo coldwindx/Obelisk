@@ -11,7 +11,7 @@ __OBELISK__
 
 static Logger::ptr g_logger = LOG_SYSTEM();
 static ConfigVar<uint32_t>::ptr g_daemon_restart_interval
-                    = Config::lookup("daemon.restart_interval", (uint32_t)5, "daemon restart interval");
+                    = Config::Lookup("daemon.restart_interval", (uint32_t)5, "daemon restart interval");
 
 // static int real_start(int argc, char** argv, std::function<int(int, char**)> main_cb){
 //     return main_cb(argc, argv);
@@ -76,7 +76,10 @@ int start_daemon(int argc, char** argv, std::function<int(int, char**)> main_cb,
             LOG_INFO(g_logger) << "child finished pid=" << pid;
             break;
         }
-
+        if(9 == status){
+            LOG_INFO(g_logger) << "killed";
+            break;
+        }
         LOG_ERROR(g_logger) << "child crash pid=" << pid << " status=" << status;
         ProcessInfo::instance()->restart_count += 1;
         sleep(g_daemon_restart_interval->getValue());

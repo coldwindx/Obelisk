@@ -24,9 +24,9 @@ public:
     static void LoadFromConfDir(const std::string& path);
 
     template<typename T>
-    static typename ConfigVar<T>::ptr lookup(const std::string & name);
+    static typename ConfigVar<T>::ptr Lookup(const std::string & name);
     template<typename T>
-    static typename ConfigVar<T>::ptr lookup(const std::string & name, const T & value, const std::string& description = "");
+    static typename ConfigVar<T>::ptr Lookup(const std::string & name, const T & value, const std::string& description = "");
 
     static void visit(std::function<void(ConfigVarBase::ptr)> callback);
 protected:
@@ -41,7 +41,7 @@ private:
 
 
 template<typename T>
-typename ConfigVar<T>::ptr Config::lookup(const std::string & name){
+typename ConfigVar<T>::ptr Config::Lookup(const std::string & name){
     ReadLock lock(GetMutex());
     auto it = configVarMap().find(name);
     if(configVarMap().end() == it){
@@ -51,7 +51,7 @@ typename ConfigVar<T>::ptr Config::lookup(const std::string & name){
 }
 
 template<typename T>
-typename ConfigVar<T>::ptr Config::lookup(const std::string & name, const T & value, const std::string & description){
+typename ConfigVar<T>::ptr Config::Lookup(const std::string & name, const T & value, const std::string & description){
     WriteLock lock(GetMutex());
     auto it = configVarMap().find(name);
     if(configVarMap().end() != it){

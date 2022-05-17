@@ -6,7 +6,7 @@ __OBELISK__
 __HTTP__
 
 static ConfigVar<uint64_t>::ptr g_tcp_server_recv_timeout 
-            = Config::lookup("tcp_server.recv_timeout", (uint64_t)(60 * 1000 * 2), "tcp server recv timeout");
+            = Config::Lookup("tcp_server.recv_timeout", (uint64_t)(60 * 1000 * 2), "tcp server recv timeout");
 static Logger::ptr g_logger = LOG_SYSTEM();
 
 TcpServer::TcpServer(IOManager *worker, IOManager *aworker) 

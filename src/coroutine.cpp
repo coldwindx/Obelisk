@@ -17,7 +17,7 @@ static thread_local Coroutine* t_coroutine = nullptr;
 static thread_local Coroutine::ptr t_thread_coroutine = nullptr;
                                     // 协程栈空间
 static ConfigVar<uint32_t>::ptr g_coroutine_stack_size = 
-        Config::lookup<uint32_t>("coroutine.stack_size", 1024 * 1024, "coroutine stack size");
+        Config::Lookup<uint32_t>("coroutine.stack_size", 1024 * 1024, "coroutine stack size");
 
 class MemoryAllocator{
 public:

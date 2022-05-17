@@ -98,7 +98,7 @@ public:
 
 
 static ConfigVar<std::set<LogConfig> >::ptr g_log_defines 
-    = Config::lookup("logs", std::set<LogConfig>(), "logs config");
+    = Config::Lookup("logs", std::set<LogConfig>(), "logs config");
 
 LogIniter::LogIniter(){
     g_log_defines->addListener([](const std::set<LogConfig>& oldValue, const std::set<LogConfig>& newValue){

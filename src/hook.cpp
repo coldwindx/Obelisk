@@ -11,7 +11,7 @@ static obelisk::Logger::ptr g_logger = LOG_SYSTEM();
 __OBELISK__
 
 static ConfigVar<int>::ptr g_top_connect_timeout 
-        = Config::lookup("top.connect.timeout", 5000, "tcp connect, timeout");
+        = Config::Lookup("top.connect.timeout", 5000, "tcp connect, timeout");
 static thread_local bool t_hook_enable = false;
 
 #define HOOK_FUN(XX) \

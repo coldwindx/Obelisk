@@ -25,6 +25,7 @@ SET(SRC_LIST
     src/daemon.cpp
     src/env.cpp
     src/utils.cpp
+    src/application.cpp
     src/http/http.cpp
     src/http/http11_parser.cc
     src/http/httpclient_parser.cc

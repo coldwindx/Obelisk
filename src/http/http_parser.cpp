@@ -13,13 +13,13 @@ static Logger::ptr g_logger = LOG_SYSTEM();
  *        使用静态拷贝来减少锁的性能问题
  */
 static ConfigVar<uint64_t>::ptr g_http_request_buffer_size 
-        = Config::lookup("http.request.buffer_size", (uint64_t)4 * 1024, "http request buffer size");
+        = Config::Lookup("http.request.buffer_size", (uint64_t)4 * 1024, "http request buffer size");
 static ConfigVar<uint64_t>::ptr g_http_request_max_body_size 
-        = Config::lookup("http.request.max_body_size", (uint64_t)64 * 1024 * 1024, "http request max body size");
+        = Config::Lookup("http.request.max_body_size", (uint64_t)64 * 1024 * 1024, "http request max body size");
 static ConfigVar<uint64_t>::ptr g_http_response_buffer_size 
-        = Config::lookup("http.response.buffer_size", (uint64_t)4 * 1024, "http response buffer size");
+        = Config::Lookup("http.response.buffer_size", (uint64_t)4 * 1024, "http response buffer size");
 static ConfigVar<uint64_t>::ptr g_http_response_max_body_size 
-        = Config::lookup("http.response.max_body_size", (uint64_t)64 * 1024 * 1024, "http response max body size");
+        = Config::Lookup("http.response.max_body_size", (uint64_t)64 * 1024 * 1024, "http response max body size");
 
 static uint64_t s_http_request_buffer_size = 0;
 static uint64_t s_http_request_max_body_size = 0;
