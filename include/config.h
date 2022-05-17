@@ -14,8 +14,14 @@ __OBELISK__
 class Config {
 public:
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
-
-    static void loadFromYaml(const YAML::Node & node);
+    /**
+     * @brief 由yaml配置文件获取配置信息
+     */
+    static void LoadFromYaml(const YAML::Node & node);
+    /**
+     * @brief 由文件夹批量获取配置信息
+     */
+    static void LoadFromConfDir(const std::string& path);
 
     template<typename T>
     static typename ConfigVar<T>::ptr lookup(const std::string & name);

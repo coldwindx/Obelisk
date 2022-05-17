@@ -52,6 +52,7 @@ static ConfigVar<uint32_t>::ptr g_daemon_restart_interval
 int start_daemon(int argc, char** argv, std::function<int(int, char**)> main_cb, bool is_daemon){
     if(!is_daemon)
         return main_cb(argc, argv);
+    daemon(1, 0);
     ProcessInfo::instance()->parent_id = getpid();
     ProcessInfo::instance()->parent_start_time = time(0);
     while(true){

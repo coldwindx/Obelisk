@@ -23,6 +23,8 @@ SET(SRC_LIST
     src/socket.cpp
     src/bytearray.cpp
     src/daemon.cpp
+    src/env.cpp
+    src/utils.cpp
     src/http/http.cpp
     src/http/http11_parser.cc
     src/http/httpclient_parser.cc

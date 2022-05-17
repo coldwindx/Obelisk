@@ -1,10 +1,16 @@
-#include "system.hpp"
-#include "config.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include "env.h"
 #include "log.h"
+#include "utils.h"
+#include "config.h"
 
 __OBELISK__
 
-void Config::loadFromYaml(const YAML::Node & root){
+static Logger::ptr g_logger = LOG_SYSTEM();
+
+void Config::LoadFromYaml(const YAML::Node & root){
     std::list<std::pair<std::string, YAML::Node> > nodes;
     transform("", root, nodes);
     for(auto & i : nodes){
@@ -22,6 +28,34 @@ void Config::loadFromYaml(const YAML::Node & root){
             ss << i.second;
             it->second->fromString(ss.str());
         }
+    }
+}
+
+static std::map<std::string, uint64_t> s_file2modifytime;
+static Mutex s_mutex;
+
+void Config::LoadFromConfDir(const std::string& path){
+    std::string absoulte_path = Env::instance()->getAbsolutePath(path);
+    std::vector<std::string> files;
+    FileUtils::ListAllFile(files, absoulte_path, ".yaml");
+
+    for(auto & i : files){
+        struct stat st;
+        lstat(i.c_str(), &st);
+        {
+            Lock lock(s_mutex);
+            if(st.st_mtime == s_file2modifytime[i])
+                continue;
+            s_file2modifytime[i] = st.st_mtime;
+        }
+        try{
+            YAML::Node root = YAML::LoadFile(i);
+            LoadFromYaml(root);
+            LOG_INFO(g_logger) << "LoadConfFile file=" << i << " success";
+        }catch(...){
+            LOG_ERROR(g_logger) << "LoadConfFile file=" << i << " failed";
+        }
+        
     }
 }
 

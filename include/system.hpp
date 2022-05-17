@@ -34,9 +34,9 @@ static uint64_t GetCurrentUS(){
 
 static std::string Time2Str(time_t ts, const char* format = "%Y-%m-%d %H:%M:%S"){
 	struct tm tm;
-	localtime_r(&time, &tm);
+	localtime_r(&ts, &tm);
 	char buf[64];
-	strftime(buf, sizeof(buf), format.c_str(), &tm);
+	strftime(buf, sizeof(buf), format, &tm);
 	return buf;
 }
 __END__

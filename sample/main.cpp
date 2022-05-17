@@ -3,23 +3,29 @@
 #include "config.h"
 #include "daemon.h"
 #include "iomanager.h"
-#include "timer.h"
+#include "env.h"
 
 using namespace std;
 using namespace obelisk;
 
 static Logger::ptr g_logger = LOG_SYSTEM();
-Timer::ptr timer;
-int server_main(int argc, char **argv){
-    IOManager iom(2);
-    timer = iom.addTimer(1000, [timer](){
-        LOG_INFO(g_logger) << "onTimer";
-        static int count = 0;
-        if(++count > 10)
-            timer->cancel();
-    }, true);
-}
 
 int main(int argc, char **argv){
-    return start_daemon(argc, argv, server_main, argc != 1);
+    cout << "argc=" << argc << endl;
+    Env::instance()->addHelp("s", "start with the terminal");
+    Env::instance()->addHelp("d", "run as daemon");
+    Env::instance()->addHelp("h", "print help");
+    if(!Env::instance()->init(argc, argv)){
+        Env::instance()->printHelp();
+        return 0;
+    }
+
+    cout << "exe=" << Env::instance()->getExe() << endl;
+    cout << "cwd=" << Env::instance()->getCwd() << endl;
+    cout << "path=" << Env::instance()->getEnv("PATH", "xxx") << endl;
+
+    if(Env::instance()->has("h")){
+        Env::instance()->printHelp();
+    }
+    return 0;
 }
