@@ -2,7 +2,7 @@
 #include <atomic>
 #include "config.h"
 #include "log.h"
-#include "coroutine_macro.h"
+#include "assert.hpp"
 #include "coroutine.h"
 
 __OBELISK__
