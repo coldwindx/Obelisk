@@ -6,7 +6,6 @@ INCLUDE_DIRECTORIES(./log)
 INCLUDE_DIRECTORIES(/usr/include)
 
 SET(SRC_LIST    
-    sample/main.cpp 
     log/log_formatter.cpp 
     log/logger.cpp 
     log/log_initer.cpp
@@ -28,24 +27,28 @@ SET(SRC_LIST
     src/module.cpp
     src/library.cpp
     src/http/http.cpp
-    src/http/http11_parser.cc
-    src/http/httpclient_parser.cc
     src/http/http_parser.cpp
     src/http/tcp_server.cpp
     src/http/http_session.cpp
     src/http/http_connection.cpp
     src/http/http_server.cpp
     src/http/servlet.cpp
-    src/http/uri.cc
     src/stream.cpp
     src/streams/socket_stream.cpp)
+
+ragelmaker(src/http/http11_parser.rl SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
+ragelmaker(src/http/httpclient_parser.rl SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
+ragelmaker(src/http/uri.rl SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/src/http)
 
 LINK_DIRECTORIES(/usr/local/lib64)
 SET(LIBS pthread yaml-cpp dl)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
 file(COPY ${PROJECT_SOURCE_DIR}/bin/conf DESTINATION ${PROJECT_SOURCE_DIR}/build)
 
-ADD_EXECUTABLE(main.out ${SRC_LIST})
-TARGET_LINK_LIBRARIES(main.out ${LIBS})
+ADD_LIBRARY(obelisk SHARED ${SRC_LIST})
+
+ADD_EXECUTABLE(main.out "sample/main.cpp")
+TARGET_LINK_LIBRARIES(main.out obelisk ${LIBS})
 force_redefine_file_macro_for_sources(project_name)
