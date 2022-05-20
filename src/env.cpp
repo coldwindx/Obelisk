@@ -100,6 +100,10 @@ std::string Env::getAbsolutePath(const std::string& path) const{
     return m_cwd + path;
 }
 
+std::string Env::getConfigPath(){
+    return getAbsolutePath(get("c", "conf"));
+}
+
 bool Env::setEnv(const std::string& key, const std::string& val){
     return !setenv(key.c_str(), val.c_str(), 1);
 }

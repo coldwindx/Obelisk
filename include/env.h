@@ -25,6 +25,7 @@ public:
     std::string getEnv(const std::string& key, const std::string& default_value = "");
 
     std::string getAbsolutePath(const std::string& path) const;
+    std::string getConfigPath();
 
     static Env* instance(){
         static Env* env = new Env();

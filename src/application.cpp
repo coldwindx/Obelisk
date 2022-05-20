@@ -4,6 +4,7 @@
 #include "config.h"
 #include "daemon.h"
 #include "utils.h"
+#include "module.h"
 #include "application.h"
 #include "http/http_server.h"
 
@@ -85,15 +86,34 @@ bool Application::init(int argc, char** argv){
     Env::instance()->addHelp("c", "conf path default: ./conf");
     Env::instance()->addHelp("h", "print help");
 
-    if(!Env::instance()->init(argc, argv)){
+    bool is_print_help = false;
+    if(!Env::instance()->init(argc, argv))
+        is_print_help = true;
+
+    if(Env::instance()->has("h"))
+        is_print_help = true;
+    
+    std::string conf_path = Env::instance()->getConfigPath();
+    LOG_INFO(g_logger) << "load conf path:" << conf_path;
+    Config::LoadFromConfDir(conf_path);
+
+    ModuleManager::instance()->init();
+    std::vector<Module::ptr> modules;
+    ModuleManager::instance()->list(modules);
+
+    for(auto i : modules) {
+        i->beforeArgsParse(argc, argv);
+    }
+
+    if(is_print_help) {
         Env::instance()->printHelp();
         return false;
     }
 
-    if(Env::instance()->has("h")){
-        Env::instance()->printHelp();
-        return false;
+    for(auto i : modules) {
+        i->afterArgsParse(argc, argv);
     }
+    modules.clear();
 
     int run_type = 0;
     if(Env::instance()->has("s"))
@@ -111,11 +131,6 @@ bool Application::init(int argc, char** argv){
         LOG_ERROR(g_logger) << "server is running:" << pidfile;
         return false;
     }
-
-    std::string path = Env::instance()->get("c", "../bin/conf");
-    std::string conf_path = Env::instance()->getAbsolutePath(path);
-    LOG_INFO(g_logger) << "load conf path:" << conf_path;
-    Config::LoadFromConfDir(conf_path);
 
     if(!FileUtils::Mkdir(g_server_work_path->getValue())){
         LOG_FATAL(g_logger) << "create work path [" << g_server_work_path->getValue()
@@ -149,6 +164,20 @@ int Application::main(int argc, char** argv){
 }
 
 int Application::runCoroutine(){
+    std::vector<Module::ptr> modules;
+    ModuleManager::instance()->list(modules);
+    bool has_error = false;
+    for(auto& i : modules) {
+        if(i->onLoad()) 
+            continue;
+        LOG_ERROR(g_logger) << "module name="
+            << i->getName() << " version=" << i->getVersion()
+            << " filename=" << i->getFilename();
+        has_error = true;
+    }
+    if(has_error) _exit(0);
+    
+
     auto http_confs = g_http_servers_conf->getValue();
     for(auto & i : http_confs){
         LOG_INFO(g_logger) << Convert<HttpServerConf, std::string>()(i);

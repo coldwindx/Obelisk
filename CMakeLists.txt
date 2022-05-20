@@ -1,9 +1,8 @@
 PROJECT(OBELISK)
 
+INCLUDE(cmake/utils.cmake)
 INCLUDE_DIRECTORIES(./include)
 INCLUDE_DIRECTORIES(./log)
-INCLUDE_DIRECTORIES(./config)
-INCLUDE_DIRECTORIES(./coroutine)
 INCLUDE_DIRECTORIES(/usr/include)
 
 SET(SRC_LIST    
@@ -26,6 +25,8 @@ SET(SRC_LIST
     src/env.cpp
     src/utils.cpp
     src/application.cpp
+    src/module.cpp
+    src/library.cpp
     src/http/http.cpp
     src/http/http11_parser.cc
     src/http/httpclient_parser.cc
@@ -38,9 +39,13 @@ SET(SRC_LIST
     src/http/uri.cc
     src/stream.cpp
     src/streams/socket_stream.cpp)
-SET(LIBS pthread yaml-cpp dl)
 
 LINK_DIRECTORIES(/usr/local/lib64)
+SET(LIBS pthread yaml-cpp dl)
+
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
+file(COPY ${PROJECT_SOURCE_DIR}/bin/conf DESTINATION ${PROJECT_SOURCE_DIR}/build)
 
 ADD_EXECUTABLE(main.out ${SRC_LIST})
 TARGET_LINK_LIBRARIES(main.out ${LIBS})
+force_redefine_file_macro_for_sources(project_name)
