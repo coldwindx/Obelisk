@@ -1,14 +1,14 @@
 PROJECT(OBELISK)
 
 INCLUDE(cmake/utils.cmake)
-INCLUDE_DIRECTORIES(./include)
-INCLUDE_DIRECTORIES(./log)
+
 INCLUDE_DIRECTORIES(/usr/include)
+INCLUDE_DIRECTORIES(./include)
 
 SET(SRC_LIST    
-    log/log_formatter.cpp 
-    log/logger.cpp 
-    log/log_initer.cpp
+    src/log/log_formatter.cpp 
+    src/log/logger.cpp 
+    src/log/log_initer.cpp
     src/config.cpp
     src/thread.cpp
     src/coroutine.cpp

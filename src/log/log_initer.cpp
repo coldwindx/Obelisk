@@ -1,5 +1,5 @@
-#include "log_initer.h"
-#include "log_macro.h"
+#include "log/log_initer.h"
+#include "log/log_macro.h"
 #include "config.h"
 
 __OBELISK__

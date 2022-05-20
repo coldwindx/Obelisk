@@ -1,6 +1,6 @@
 #include <tuple>
-#include "log_formatter.h"
-#include "format_manager.h"
+#include "log/log_formatter.h"
+#include "log/format_manager.h"
 
 __OBELISK__
 
